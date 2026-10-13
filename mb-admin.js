@@ -1,0 +1,563 @@
+const $ = (s, r = document) => r.querySelector(s);
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    credentials: "include",
+    headers: opts.body instanceof FormData ? {} : { "Content-Type": "application/json" },
+    ...opts,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
+
+async function upload(file) {
+  const fd = new FormData();
+  fd.append("file", file);
+  const d = await api("/api/admin/upload", { method: "POST", body: fd });
+  return d.url;
+}
+
+let toastTimer;
+function toast(msg, type = "ok") {
+  const t = $("#toast");
+  if (!t) return;
+  t.textContent = msg;
+  t.className = "toast " + type;
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (t.hidden = true), 2800);
+}
+
+function showApp(on) {
+  $("#loginView").hidden = on;
+  $("#appView").hidden = !on;
+  if (on) loadView(currentView);
+}
+
+let currentView = "dashboard";
+const TITLES = {
+  dashboard: "Dashboard",
+  tracks: "Tracks",
+  portfolio: "Testimonials",
+  enquiries: "Enquiries",
+  settings: "Settings",
+};
+
+function loadView(view) {
+  currentView = view;
+  $("#viewTitle").textContent = TITLES[view] || view;
+  document.querySelectorAll(".sidebar__nav button").forEach((b) => {
+    b.classList.toggle("active", b.dataset.view === view);
+  });
+  $("#sidebar").classList.remove("open");
+  const c = $("#viewContent");
+  c.innerHTML = "";
+  if (view === "dashboard") renderDashboard(c);
+  else if (view === "tracks") renderTracks(c);
+  else if (view === "portfolio") renderPortfolio(c);
+  else if (view === "enquiries") renderEnquiries(c);
+  else if (view === "settings") renderSettings(c);
+}
+
+$("#loginForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const note = $("#loginNote");
+  note.textContent = "";
+  note.classList.remove("error");
+  try {
+    await api("/api/admin/login", {
+      method: "POST",
+      body: JSON.stringify({
+        user: $("#loginUser").value,
+        password: $("#loginPass").value,
+      }),
+    });
+    showApp(true);
+  } catch (err) {
+    note.textContent = err.message;
+    note.classList.add("error");
+  }
+};
+
+$("#logoutBtn").onclick = async () => {
+  await api("/api/admin/logout", { method: "POST" });
+  location.reload();
+};
+
+$("#mobileMenuBtn").onclick = () => $("#sidebar").classList.toggle("open");
+document.querySelectorAll(".sidebar__nav button").forEach((b) => {
+  b.onclick = () => loadView(b.dataset.view);
+});
+
+function panel(title, inner, extraHead = "") {
+  return `<section class="panel"><div class="panel__head"><h3>${title}</h3>${extraHead}</div><div class="panel__body">${inner}</div></section>`;
+}
+
+function row(title, sub, id, kind) {
+  const wrap = document.createElement("div");
+  wrap.className = "list-row";
+  wrap.innerHTML = `<div class="list-row__main"><div class="list-row__title"></div><div class="list-row__sub"></div></div><div class="list-row__actions"><button type="button" class="btn btn--danger btn--sm">Delete</button></div>`;
+  wrap.querySelector(".list-row__title").textContent = title;
+  wrap.querySelector(".list-row__sub").textContent = sub || "";
+  wrap.querySelector("button").onclick = async () => {
+    if (!confirm("Delete this?")) return;
+    await api("/api/admin/" + kind + "/" + id, { method: "DELETE" });
+    loadView(currentView);
+  };
+  return wrap;
+}
+
+async function renderDashboard(c) {
+  const [tracks, folio, enqs] = await Promise.all([
+    api("/api/admin/tracks"),
+    api("/api/admin/works"),
+    api("/api/admin/enquiries"),
+  ]);
+  const unread = enqs.filter((e) => e.status !== "read").length;
+  const badge = $("#enqBadge");
+  if (unread) {
+    badge.hidden = false;
+    badge.textContent = String(unread);
+  } else badge.hidden = true;
+  c.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="stat__num">${tracks.length}</div><div class="stat__label">Tracks</div></div>
+      <div class="stat"><div class="stat__num">${folio.length}</div><div class="stat__label">Testimonials</div></div>
+      <div class="stat"><div class="stat__num">${enqs.length}</div><div class="stat__label">Enquiries</div></div>
+    </div>
+    ${panel("Quick add", `<p class="empty">Use Tracks for songs. Use Testimonials for a photo or a written note.</p>`)}
+  `;
+}
+
+function addForm(fields, onSave) {
+  const f = document.createElement("form");
+  fields.forEach(([name, label, type]) => {
+    const box = document.createElement("div");
+    box.className = "field";
+    const lab = document.createElement("label");
+    lab.textContent = label;
+    const input = type === "textarea" ? document.createElement("textarea") : document.createElement("input");
+    input.name = name;
+    box.appendChild(lab);
+    box.appendChild(input);
+    f.appendChild(box);
+  });
+  const file = document.createElement("input");
+  file.type = "file";
+  file.accept = "image/*,audio/*";
+  const fileWrap = document.createElement("div");
+  fileWrap.className = "field";
+  const fl = document.createElement("label");
+  fl.textContent = "Upload cover or audio";
+  fileWrap.appendChild(fl);
+  fileWrap.appendChild(file);
+  f.appendChild(fileWrap);
+  const btn = document.createElement("button");
+  btn.className = "btn btn--primary";
+  btn.textContent = "Save";
+  f.appendChild(btn);
+  f.onsubmit = async (e) => {
+    e.preventDefault();
+    const body = {};
+    fields.forEach(([name]) => (body[name] = f[name].value));
+    if (file.files[0]) {
+      try {
+        const url = await upload(file.files[0]);
+        if (file.files[0].type.startsWith("audio")) body.audio = url;
+        else {
+          body.cover = url;
+          body.image = url;
+        }
+      } catch (err) {
+        toast(err.message, "err");
+        return;
+      }
+    }
+    await onSave(body);
+    f.reset();
+    toast("Saved");
+    loadView(currentView);
+  };
+  return f;
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function fieldHTML(label, name, value, opts = {}) {
+  const required = opts.required ? "required" : "";
+  const input = opts.type === "textarea"
+    ? `<textarea data-name="${name}" rows="${opts.rows || 3}" ${required}>${esc(value)}</textarea>`
+    : `<input type="text" data-name="${name}" value="${esc(value)}" ${required} />`;
+  return `<div class="field"><label>${esc(label)}</label>${input}${opts.hint ? `<div class="hint">${esc(opts.hint)}</div>` : ""}</div>`;
+}
+
+function fileFieldHTML(label, name, value, accept) {
+  const showImage = Boolean(value) && accept.includes("image");
+  return `
+  <div class="field">
+    <label>${esc(label)}</label>
+    <input type="text" data-name="${name}" value="${esc(value)}" placeholder="Upload a file or paste a URL" />
+    <div class="file-pick">
+      <button type="button" class="btn btn--ghost btn--sm" data-upload="${name}">Upload</button>
+      <input type="file" data-file="${name}" accept="${accept}" />
+      <span class="file-pick__name" data-filename="${name}"></span>
+    </div>
+    <div class="url-preview" data-urlpreview="${name}">${value ? "Saved: " + esc(value) : ""}</div>
+    <img class="preview-img" data-preview="${name}" ${showImage ? `src="${esc(value)}"` : "hidden"} />
+  </div>`;
+}
+
+function collectForm(root) {
+  const body = {};
+  root.querySelectorAll("[data-name]").forEach((el) => {
+    body[el.dataset.name] = el.value;
+  });
+  return body;
+}
+
+function closeModal() {
+  const m = $("#modal");
+  if (m) m.hidden = true;
+}
+
+function openModal(title, html) {
+  $("#modalTitle").textContent = title;
+  $("#modalBody").innerHTML = html;
+  $("#modal").hidden = false;
+  $("#modal").querySelectorAll("[data-close]").forEach((el) => {
+    el.onclick = closeModal;
+  });
+  wireUploads($("#modalBody"));
+}
+
+function wireUploads(root) {
+  root.querySelectorAll("[data-upload]").forEach((btn) => {
+    btn.onclick = () => root.querySelector(`[data-file="${btn.dataset.upload}"]`).click();
+  });
+  root.querySelectorAll("[data-file]").forEach((input) => {
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+      const name = input.dataset.file;
+      const label = root.querySelector(`[data-filename="${name}"]`);
+      if (label) label.textContent = "Uploading…";
+      try {
+        const url = await upload(file);
+        const urlInput = root.querySelector(`[data-name="${name}"]`);
+        if (urlInput) urlInput.value = url;
+        const prev = root.querySelector(`[data-urlpreview="${name}"]`);
+        if (prev) prev.textContent = "Saved: " + url;
+        const img = root.querySelector(`[data-preview="${name}"]`);
+        if (img && file.type.startsWith("image")) {
+          img.src = url;
+          img.hidden = false;
+        }
+        if (label) label.textContent = file.name;
+        toast("Uploaded");
+      } catch (err) {
+        if (label) label.textContent = "";
+        toast(err.message, "err");
+      }
+    };
+  });
+}
+
+function trackForm(s = {}) {
+  return `
+    <div class="field-row">
+      ${fieldHTML("Title *", "title", s.title, { required: true })}
+      ${fieldHTML("Artist", "artist", s.artist || "Morgan Benjamin")}
+    </div>
+    <div class="field-row">
+      ${fieldHTML("Genre", "genre", s.genre)}
+      ${fieldHTML("Release Date", "release_date", s.release_date, { hint: "e.g. 2026" })}
+    </div>
+    ${fieldHTML("Description", "description", s.description, { type: "textarea" })}
+    ${fileFieldHTML("Cover Artwork", "cover", s.cover || "", "image/*")}
+    ${fileFieldHTML("Audio File (.mp3)", "audio", s.audio || "", "audio/*")}
+    ${fieldHTML("YouTube ID (for Listen button)", "youtube_id", s.youtube_id, { hint: "The video ID, e.g. dQw4w9WgXcQ" })}
+    <div class="field-row">
+      ${fieldHTML("Spotify Link", "spotify", s.spotify)}
+      ${fieldHTML("Apple Music Link", "apple", s.apple)}
+    </div>
+    <div class="field-row">
+      ${fieldHTML("YouTube Link", "youtube", s.youtube)}
+      ${fieldHTML("Audiomack Link", "audiomack", s.audiomack)}
+    </div>`;
+}
+
+function packTrackLinks(body) {
+  const urls = [body.spotify, body.apple, body.youtube, body.audiomack].filter(Boolean);
+  if (body.youtube_id && !body.youtube) urls.push("https://www.youtube.com/watch?v=" + body.youtube_id);
+  body.links = urls.join(" ");
+  body.role = body.artist || "Morgan Benjamin";
+  return body;
+}
+
+async function openTrackForm(id) {
+  let data = {};
+  if (id) {
+    const all = await api("/api/admin/tracks");
+    data = all.find((x) => String(x.id) === String(id)) || {};
+  }
+  openModal(id ? "Edit" : "Add New", `
+    <form id="entityForm">${trackForm(data)}</form>
+    <button class="btn btn--primary btn--block" id="saveBtn" type="button" style="margin-top:8px">Save</button>`);
+  $("#saveBtn").onclick = async () => {
+    const body = packTrackLinks(collectForm($("#entityForm")));
+    if (!String(body.title || "").trim()) {
+      toast("Enter a title", "err");
+      return;
+    }
+    try {
+      if (id) await api("/api/admin/tracks/" + id, { method: "PATCH", body: JSON.stringify(body) });
+      else await api("/api/admin/tracks", { method: "POST", body: JSON.stringify(body) });
+      closeModal();
+      toast("Saved");
+      loadView("tracks");
+    } catch (e) {
+      toast(e.message, "err");
+    }
+  };
+}
+
+async function renderTracks(c) {
+  const rows = await api("/api/admin/tracks");
+  c.innerHTML = `
+    <div class="panel">
+      <div class="panel__head">
+        <h3>All tracks (${rows.length})</h3>
+        <button type="button" class="btn btn--primary" id="addTrack">+ Add track</button>
+      </div>
+      <div class="panel__body" id="trackList"></div>
+    </div>`;
+  $("#addTrack").onclick = () => openTrackForm();
+  const body = $("#trackList");
+  if (!rows.length) body.innerHTML = `<p class="empty">None yet.</p>`;
+  rows.forEach((r) => {
+    const wrap = document.createElement("div");
+    wrap.className = "list-row";
+    wrap.innerHTML = `<div class="list-row__main"><div class="list-row__title"></div><div class="list-row__sub"></div></div><div class="list-row__actions"><button type="button" class="btn btn--ghost btn--sm">Edit</button><button type="button" class="btn btn--danger btn--sm">Delete</button></div>`;
+    wrap.querySelector(".list-row__title").textContent = r.title;
+    wrap.querySelector(".list-row__sub").textContent = [r.artist || "Morgan Benjamin", r.genre, r.release_date].filter(Boolean).join(" · ");
+    wrap.querySelector(".btn--ghost").onclick = () => openTrackForm(r.id);
+    wrap.querySelector(".btn--danger").onclick = async () => {
+      if (!confirm("Delete this?")) return;
+      await api("/api/admin/tracks/" + r.id, { method: "DELETE" });
+      loadView("tracks");
+    };
+    body.appendChild(wrap);
+  });
+}
+
+function portfolioForm(s = {}) {
+  const kind = s.category === "text" ? "text" : "image";
+  return `
+    <div class="field">
+      <label>Type</label>
+      <select data-name="category" id="pKind">
+        <option value="image"${kind === "image" ? " selected" : ""}>Image</option>
+        <option value="text"${kind === "text" ? " selected" : ""}>Text</option>
+      </select>
+    </div>
+    ${fieldHTML("Title", "title", s.title)}
+    <div id="pImageBox">${fileFieldHTML("Image", "image", s.image || "", "image/*")}</div>
+    <div id="pTextBox">${fieldHTML("Text", "description", s.description, { type: "textarea", rows: 8 })}</div>`;
+}
+
+function togglePortfolioType() {
+  const kind = ($("#pKind") && $("#pKind").value) || "image";
+  const img = $("#pImageBox");
+  const txt = $("#pTextBox");
+  if (img) img.style.display = kind === "image" ? "block" : "none";
+  if (txt) txt.style.display = kind === "text" ? "block" : "none";
+}
+
+async function openPortfolioForm(id) {
+  let data = {};
+  if (id) {
+    const all = await api("/api/admin/works");
+    data = all.find((x) => String(x.id) === String(id)) || {};
+  }
+  openModal(id ? "Edit" : "Add New", `
+    <form id="entityForm">${portfolioForm(data)}</form>
+    <button class="btn btn--primary btn--block" id="saveBtn" type="button" style="margin-top:8px">Save</button>`);
+  togglePortfolioType();
+  if ($("#pKind")) $("#pKind").onchange = togglePortfolioType;
+  $("#saveBtn").onclick = async () => {
+    const body = collectForm($("#entityForm"));
+    body.category = body.category === "text" ? "text" : "image";
+    if (!String(body.title || "").trim()) {
+      body.title = body.category === "text" ? "Text" : "Image";
+    }
+    if (body.category === "image" && !body.image) {
+      toast("Upload an image or paste a URL", "err");
+      return;
+    }
+    if (body.category === "text" && !String(body.description || "").trim()) {
+      toast("Write some text", "err");
+      return;
+    }
+    try {
+      if (id) await api("/api/admin/works/" + id, { method: "PATCH", body: JSON.stringify(body) });
+      else await api("/api/admin/works", { method: "POST", body: JSON.stringify(body) });
+      closeModal();
+      toast("Saved");
+      loadView("portfolio");
+    } catch (e) {
+      toast(e.message, "err");
+    }
+  };
+}
+
+async function renderPortfolio(c) {
+  const rows = await api("/api/admin/works");
+  c.innerHTML = `
+    <div class="panel">
+      <div class="panel__head">
+        <h3>Testimonials (${rows.length})</h3>
+        <button type="button" class="btn btn--primary" id="addFolio">+ Add</button>
+      </div>
+      <div class="panel__body" id="folioList"></div>
+    </div>`;
+  $("#addFolio").onclick = () => openPortfolioForm();
+  const body = $("#folioList");
+  if (!rows.length) body.innerHTML = `<p class="empty">Add a photo or a written note.</p>`;
+  rows.forEach((r) => {
+    const wrap = document.createElement("div");
+    wrap.className = "list-row";
+    wrap.innerHTML = `<div class="list-row__main"><div class="list-row__title"></div><div class="list-row__sub"></div></div><div class="list-row__actions"><button type="button" class="btn btn--ghost btn--sm">Edit</button><button type="button" class="btn btn--danger btn--sm">Delete</button></div>`;
+    wrap.querySelector(".list-row__title").textContent = r.title || (r.category === "text" ? "Text" : "Image");
+    wrap.querySelector(".list-row__sub").textContent = r.category === "text" ? "Text" : "Image";
+    wrap.querySelector(".btn--ghost").onclick = () => openPortfolioForm(r.id);
+    wrap.querySelector(".btn--danger").onclick = async () => {
+      if (!confirm("Delete this?")) return;
+      await api("/api/admin/works/" + r.id, { method: "DELETE" });
+      loadView("portfolio");
+    };
+    body.appendChild(wrap);
+  });
+}
+
+async function renderEnquiries(c) {
+  const items = await api("/api/admin/enquiries");
+  const newCount = items.filter((e) => e.status === "new").length;
+  const badge = $("#enqBadge");
+  if (newCount) {
+    badge.hidden = false;
+    badge.textContent = String(newCount);
+  } else badge.hidden = true;
+
+  c.innerHTML = `
+    <div class="panel">
+      <div class="panel__head"><h3>Enquiries (${items.length})</h3></div>
+      <div class="panel__body" id="enqList"></div>
+    </div>`;
+  const body = $("#enqList");
+  if (!items.length) {
+    body.innerHTML = `<p class="empty">None yet.</p>`;
+    return;
+  }
+  items.forEach((e) => {
+    const wrap = document.createElement("div");
+    wrap.className = "list-row" + (e.status === "read" ? " enquiry--read" : "");
+    wrap.innerHTML = `
+      <div class="list-row__main">
+        <div class="list-row__title"></div>
+        <div class="list-row__sub"></div>
+      </div>
+      <div class="list-row__actions">
+        <button type="button" class="btn btn--ghost btn--sm" data-open>View</button>
+        <button type="button" class="btn btn--ghost btn--sm" data-toggle></button>
+        <button type="button" class="btn btn--danger btn--sm" data-del>Delete</button>
+      </div>`;
+    const title = wrap.querySelector(".list-row__title");
+    title.textContent = (e.status === "new" ? "● " : "") + (e.name || "");
+    const svc = document.createElement("span");
+    svc.style.color = "var(--accent-2)";
+    svc.style.fontWeight = "500";
+    svc.textContent = e.service ? " " + e.service : "";
+    title.appendChild(svc);
+    wrap.querySelector(".list-row__sub").textContent = [e.email, e.phone, e.created_at].filter(Boolean).join(" · ");
+    wrap.querySelector("[data-toggle]").textContent = e.status === "new" ? "Mark read" : "Mark new";
+    wrap.querySelector("[data-open]").onclick = () => {
+      const mail = "mailto:" + encodeURIComponent(e.email || "") + "?subject=" + encodeURIComponent("Re: " + (e.subject || ""));
+      openModal("Enquiry", `
+        <div class="enquiry">
+          <div class="enquiry__meta"></div>
+          <p style="margin-bottom:10px"><strong>Subject:</strong> <span data-sub></span></p>
+          <div class="enquiry__msg"></div>
+          <a class="btn btn--primary btn--block" style="margin-top:16px" data-mail>Reply by Email</a>
+        </div>`);
+      const box = $("#modalBody");
+      box.querySelector(".enquiry__meta").textContent = [e.name, e.email, e.phone, e.service, e.created_at].filter(Boolean).join(" · ");
+      box.querySelector("[data-sub]").textContent = e.subject || "";
+      box.querySelector(".enquiry__msg").textContent = e.message || "";
+      box.querySelector("[data-mail]").href = mail;
+    };
+    wrap.querySelector("[data-toggle]").onclick = async () => {
+      await api("/api/admin/enquiries/" + e.id, {
+        method: "PATCH",
+        body: JSON.stringify({ status: e.status === "new" ? "read" : "new" }),
+      });
+      loadView("enquiries");
+    };
+    wrap.querySelector("[data-del]").onclick = async () => {
+      if (!confirm("Delete this enquiry?")) return;
+      await api("/api/admin/enquiries/" + e.id, { method: "DELETE" });
+      toast("Deleted");
+      loadView("enquiries");
+    };
+    body.appendChild(wrap);
+  });
+}
+
+async function renderSettings(c) {
+  const s = await api("/api/admin/settings");
+  const about = s.about || {};
+  const social = s.social || {};
+  const box = document.createElement("section");
+  box.className = "panel";
+  box.innerHTML = `<div class="panel__head"><h3>Settings</h3></div><div class="panel__body"></div>`;
+  const f = document.createElement("form");
+  f.innerHTML = `
+    <div class="field"><label>Heading</label><input name="line" /></div>
+    <div class="field"><label>Bio</label><textarea name="text"></textarea></div>
+    <div class="field"><label>Instagram URL</label><input name="instagram" /></div>
+    <div class="field"><label>Spotify URL</label><input name="spotify" /></div>
+    <div class="field"><label>YouTube URL</label><input name="youtube" /></div>
+    <button class="btn btn--primary" type="submit">Save</button>
+  `;
+  f.line.value = about.line || "";
+  f.text.value = about.text || "";
+  f.instagram.value = social.instagram || "";
+  f.spotify.value = social.spotify || "";
+  f.youtube.value = social.youtube || "";
+  f.onsubmit = async (e) => {
+    e.preventDefault();
+    await api("/api/admin/settings", {
+      method: "POST",
+      body: JSON.stringify({
+        key: "about",
+        value: { photo: about.photo || "/mb-studio.png", line: f.line.value, text: f.text.value },
+      }),
+    });
+    await api("/api/admin/settings", {
+      method: "POST",
+      body: JSON.stringify({
+        key: "social",
+        value: { instagram: f.instagram.value, spotify: f.spotify.value, youtube: f.youtube.value, apple: social.apple || "" },
+      }),
+    });
+    toast("Saved");
+  };
+  box.querySelector(".panel__body").appendChild(f);
+  c.appendChild(box);
+}
+
+api("/api/admin/check").then((d) => {
+  if (d.authenticated) showApp(true);
+}).catch(() => {});

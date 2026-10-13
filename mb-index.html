@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Morgan Benjamin</title>
+  <meta name="description" content="Morgan Benjamin. Music after dark." />
+  <link rel="icon" type="image/png" sizes="32x32" href="/mb-favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="64x64" href="/mb-favicon.png" />
+  <link rel="apple-touch-icon" href="/mb-apple-touch-icon.png" />
+  <style>
+    :root {
+      --black: #040404;
+      --char: #101010;
+      --ivory: #f6ecd8;
+      --mute: #d7cbb3;
+      --gold: #e8b84a;
+      --line: rgba(246,236,216,.2);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    html, body { background: var(--black) !important; color: var(--ivory); min-height: 100%; }
+    body { font-family: Georgia, "Times New Roman", serif; line-height: 1.5; }
+    body::before {
+      content: ""; pointer-events: none; position: fixed; inset: 0; z-index: 80; opacity: .04;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    a { color: var(--ivory); text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    .nav {
+      position: sticky; top: 0; z-index: 60;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 28px; gap: 16px;
+      transition: background .25s ease, border-color .25s ease;
+    }
+    .nav.on { background: rgba(4,4,4,.94); border-bottom: 1px solid var(--line); }
+    .mark img { height: 72px; width: auto; }
+    .links { display: flex; flex-wrap: wrap; gap: 22px; font-size: 15px; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; }
+    .links a:hover { color: var(--gold); }
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      background: radial-gradient(900px 420px at 12% 18%, #2a2214 0%, #040404 58%);
+    }
+    .hero-copy { display: flex; flex-direction: column; justify-content: center; padding: 72px 48px 88px; }
+    .line { color: var(--gold); letter-spacing: .42em; text-transform: uppercase; font-size: 13px; font-weight: 700; margin-bottom: 18px; }
+    .hero h1 { font-size: clamp(56px, 10vw, 120px); font-weight: 700; letter-spacing: .03em; line-height: .88; }
+    .sub { margin-top: 18px; font-size: 26px; font-weight: 700; }
+    .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+    .cta a {
+      display: inline-block; padding: 16px 28px; border: 2px solid var(--ivory);
+      letter-spacing: .16em; font-size: 13px; font-weight: 700; text-transform: uppercase;
+    }
+    .cta a.fill { background: var(--ivory); color: var(--black); }
+    .cta a.fill:hover { background: var(--gold); border-color: var(--gold); color: #111; }
+    .hero-photo {
+      min-height: 100vh;
+      background: #0b0b0b url("/mb-hero.png") 78% center/cover no-repeat;
+      position: relative;
+    }
+    .hero-photo::after {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(90deg, #040404 0%, rgba(4,4,4,.2) 42%, transparent 72%);
+    }
+    .sec { border-top: 1px solid var(--line); background: var(--black); }
+    .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 100px 0; }
+    .kicker { color: var(--gold); letter-spacing: .3em; font-size: 13px; text-transform: uppercase; font-weight: 700; margin-bottom: 12px; }
+    h2 { font-size: clamp(40px, 6vw, 64px); font-weight: 700; letter-spacing: .02em; margin-bottom: 20px; }
+    .about-split { display: grid; gap: 40px; align-items: center; }
+    @media (min-width: 860px) { .about-split { grid-template-columns: 1.1fr .9fr; } }
+    .about-pic {
+      min-height: 560px;
+      background: #111 url("/mb-studio.png") center 18%/cover no-repeat;
+      border: 2px solid var(--line);
+    }
+    .about p { color: var(--mute); font-size: 22px; max-width: 36ch; }
+    .feature { display: grid; gap: 36px; align-items: center; }
+    @media (min-width: 860px) { .feature { grid-template-columns: 380px 1fr; } }
+    .cover {
+      aspect-ratio: 1; border: 2px solid var(--gold);
+      background:
+        radial-gradient(circle at 30% 20%, #3a2e18, #14100a 70%);
+      display: grid; place-items: center; text-align: center; padding: 24px;
+    }
+    .cover img { width: 100%; height: 100%; object-fit: cover; }
+    .cover-type { font-size: 28px; font-weight: 700; letter-spacing: .12em; }
+    .cover-type small { display: block; margin-top: 10px; color: var(--gold); letter-spacing: .32em; font-size: 11px; }
+    .player {
+      display: flex; gap: 18px; align-items: center;
+      margin-top: 22px; padding: 16px 18px;
+      border: 2px solid var(--line); background: var(--char);
+    }
+    .play-btn {
+      width: 64px; height: 64px; border-radius: 50%;
+      border: 0; background: var(--gold); color: #111;
+      font-size: 22px; font-weight: 700; cursor: pointer; flex-shrink: 0;
+    }
+    .bar { height: 4px; background: #2a2a2a; margin-top: 10px; }
+    .bar span { display: block; width: 18%; height: 100%; background: var(--gold); }
+    #featTitle { font-size: 36px; font-weight: 700; }
+    #featDesc { color: var(--mute); font-size: 18px; margin-top: 8px; }
+    .stream { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .stream a, .stream span {
+      border: 2px solid var(--line); padding: 8px 14px;
+      font-size: 12px; letter-spacing: .16em; text-transform: uppercase; font-weight: 700;
+    }
+    .cards { display: grid; gap: 18px; }
+    @media (min-width: 800px) { .cards.two { grid-template-columns: 1fr 1fr; } }
+    .card { background: var(--char); border: 2px solid var(--line); padding: 22px; }
+    .card:hover { border-color: var(--gold); }
+    .card img { width: 100%; height: 200px; object-fit: cover; margin-bottom: 14px; background: #111; }
+    .card h3 { font-size: 26px; font-weight: 700; }
+    .card p { color: var(--mute); margin-top: 8px; font-size: 17px; white-space: pre-wrap; }
+    audio::-webkit-media-controls-download-button { display: none !important; }
+    audio::-webkit-media-controls-enclosure { overflow: hidden; }
+    audio { user-select: none; }
+    .genres { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+    .genres span {
+      border: 2px solid var(--line); padding: 10px 16px;
+      letter-spacing: .2em; font-size: 12px; text-transform: uppercase; font-weight: 700;
+    }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 24px; }
+    .filters button {
+      background: transparent; color: var(--ivory); border: 2px solid var(--line);
+      padding: 10px 14px; letter-spacing: .14em; font-size: 12px; text-transform: uppercase;
+      font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+    .filters button.on { background: var(--ivory); color: var(--black); }
+    .empty { color: var(--mute); font-size: 18px; }
+    .contact-head { text-align: center; margin-bottom: 44px; }
+    .contact-grid { display: grid; gap: 40px; }
+    @media (min-width: 880px) { .contact-grid { grid-template-columns: .85fr 1.15fr; } }
+    .mail { display: inline-block; margin: 12px 0; font-size: 22px; font-weight: 700; color: var(--gold); }
+    .form-card.done .form-fields { display: none; }
+    .form-done { display: none; text-align: left; }
+    .form-card.done .form-done { display: block; }
+    .form-done h3 { font-size: 32px; font-weight: 700; margin: 8px 0 12px; }
+    .form-done p { color: var(--mute); font-size: 18px; }
+    .form-card label { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+    .form-card .req { color: var(--gold); }
+    .form-card .opt { text-transform: none; letter-spacing: 0; font-weight: 400; opacity: .85; }
+    .form-card input, .form-card textarea, .form-card select {
+      width: 100%; background: #0a0a0a; border: 2px solid var(--line); border-radius: 12px;
+      padding: 14px; color: var(--ivory); font: inherit;
+    }
+    .form-card select {
+      appearance: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23f6ecd8' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 40px;
+    }
+    .form-card select option { background: #111; color: var(--ivory); }
+    .form-card input:focus, .form-card textarea:focus, .form-card select:focus {
+      outline: 0; border-color: var(--gold);
+    }
+    .form-card textarea { min-height: 130px; }
+    .phone-row { display: grid; grid-template-columns: minmax(150px, .95fr) 1.15fr; gap: 10px; }
+    @media (max-width: 560px) { .phone-row { grid-template-columns: 1fr; } }
+    .form-card button {
+      border: 0; border-radius: 999px; background: var(--gold); color: #111;
+      padding: 16px; font-size: 15px; font-weight: 700; letter-spacing: .16em;
+      text-transform: uppercase; cursor: pointer; font-family: inherit;
+    }
+    .hp { position: absolute; left: -9999px; }
+    .site-foot { border-top: 1px solid var(--line); padding: 48px 28px; }
+    .foot-grid { width: min(1120px, 100%); margin: 0 auto; display: grid; gap: 28px; }
+    @media (min-width: 800px) { .foot-grid { grid-template-columns: 1.6fr 1fr 1fr; } }
+    .foot-name { font-size: 22px; font-weight: 700; letter-spacing: .14em; }
+    .foot-grid h4 { color: var(--gold); letter-spacing: .2em; font-size: 12px; text-transform: uppercase; margin: 0 0 12px; }
+    .foot-grid a, .foot-grid p { display: block; color: var(--mute); margin: 7px 0; font-size: 16px; }
+    .dock {
+      position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 70;
+      display: none; align-items: center; gap: 14px;
+      background: #111; border: 2px solid var(--gold); padding: 12px 16px;
+    }
+    .dock.on { display: flex; }
+    @media (max-width: 800px) {
+      .hero { grid-template-columns: 1fr; min-height: auto; }
+      .hero-photo { min-height: 48vh; }
+      .hero-photo::after { background: linear-gradient(180deg, transparent 35%, #040404 100%); }
+      .hero-copy { padding: 32px 20px 52px; }
+      .mark img { height: 52px; }
+      .about-pic { min-height: 380px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav" id="nav">
+    <a class="mark" href="#home"><img src="/mb-logo.png?v=3" alt="Morgan Benjamin" /></a>
+    <div class="links">
+      <a href="#home">Home</a>
+      <a href="#about">About</a>
+      <a href="#music">Music</a>
+      <a href="#testimonials">Testimonials</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </nav>
+
+  <header class="hero" id="home">
+    <div class="hero-copy">
+      <p class="line">Music after dark.</p>
+      <h1>MORGAN<br>BENJAMIN</h1>
+      <p class="sub">Singer. Songwriter. Performer.</p>
+      <div class="cta">
+        <a class="fill" href="#music">Listen</a>
+        <a href="#about">The artist</a>
+      </div>
+    </div>
+    <div class="hero-photo" role="img" aria-label="Morgan Benjamin"></div>
+  </header>
+
+  <section class="sec" id="about">
+    <div class="wrap about-split">
+      <div class="about-pic" id="aboutPhoto" role="img" aria-label="Morgan Benjamin in the studio"></div>
+      <div>
+        <p class="kicker">About</p>
+        <h2 id="aboutHeading">Late nights.<br>Real songs.</h2>
+        <div id="aboutBody">
+          <p>Morgan Benjamin. Pop, rock, rap, indie, and EDM.</p>
+          <p>This site is for the people who play the records. New music lives here first.</p>
+        </div>
+        <div class="genres">
+          <span>Pop</span><span>Rock</span><span>Rap</span><span>Indie</span><span>EDM</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="music">
+    <div class="wrap">
+      <p class="kicker">Music</p>
+      <h2>After the Rain</h2>
+      <div class="feature">
+        <div class="cover" id="featCover">
+          <div class="cover-type">AFTER THE RAIN<small>MORGAN BENJAMIN</small></div>
+        </div>
+        <div>
+          <h3 id="featTitle">After the Rain</h3>
+          <p id="featDesc">Latest release.</p>
+          <div class="player">
+            <button class="play-btn" id="featPlay" type="button" aria-label="Play">▶</button>
+            <div style="flex:1">
+              <strong>Play</strong>
+              <div class="bar"><span></span></div>
+            </div>
+          </div>
+          <audio id="featAudio" preload="auto" hidden controlslist="nodownload noplaybackrate noremoteplayback"></audio>
+          <div class="stream" id="featLinks"></div>
+        </div>
+      </div>
+      <h2 style="margin-top:72px">More from Morgan</h2>
+      <div class="filters" id="filters">
+        <button type="button" data-cat="all" class="on">All</button>
+        <button type="button" data-cat="pop">Pop</button>
+        <button type="button" data-cat="rock">Rock</button>
+        <button type="button" data-cat="rap">Rap</button>
+        <button type="button" data-cat="indie">Indie</button>
+        <button type="button" data-cat="edm">EDM</button>
+      </div>
+      <div id="tracks" class="cards two"></div>
+      <p class="empty" id="tracksEmpty">New songs land here.</p>
+    </div>
+  </section>
+
+  <section class="sec" id="testimonials">
+    <div class="wrap">
+      <p class="kicker">Testimonials</p>
+      <h2>From listeners</h2>
+      <div id="folio" class="cards two"></div>
+      <p class="empty" id="folioEmpty">Real notes show here when they are added in admin.</p>
+    </div>
+  </section>
+
+  <section class="sec" id="contact">
+    <div class="wrap">
+      <div class="contact-head">
+        <p class="kicker">Contact</p>
+        <h2>Let's Work Together</h2>
+        <p>Have an enquiry, an idea, or a project in mind? Send a message, I'll get back to you as soon as possible.</p>
+      </div>
+      <div class="contact-grid">
+        <div>
+          <h3 style="font-size:32px;font-weight:700;margin-bottom:14px">Get in touch</h3>
+          <p class="empty">For singing, songwriting, music production, or collaborations, reach out through the form.</p>
+          <a class="mail" href="mailto:morganbenj75@gmail.com">morganbenj75@gmail.com</a>
+          <p id="socials"></p>
+        </div>
+        <form class="form-card" id="cform" method="post" action="/api/contact">
+          <div class="form-done" id="cdone">
+            <p class="kicker">Enquiry received</p>
+            <h3>I'll get back to you as soon as possible.</h3>
+            <p>Your message is with me. If I need anything else, I'll write to the email you sent.</p>
+          </div>
+          <div class="form-fields">
+          <input name="hp_trap" class="hp" tabindex="-1" autocomplete="off" />
+          <div>
+            <label for="cname">Full Name <span class="req">*</span></label>
+            <input id="cname" name="name" autocomplete="name" maxlength="120" required />
+          </div>
+          <div>
+            <label for="cemail">Email Address <span class="req">*</span></label>
+            <input id="cemail" name="email" type="email" autocomplete="email" maxlength="200" required />
+          </div>
+          <div>
+            <label for="cphone">Phone Number <span class="opt">(optional)</span></label>
+            <div class="phone-row">
+              <select id="cdial" name="dial" aria-label="Country code"></select>
+              <input id="cphone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="40" />
+            </div>
+          </div>
+          <div>
+            <label for="cservice">Service Required <span class="req">*</span></label>
+            <select id="cservice" name="service" required>
+              <option value="" selected disabled>Select a service</option>
+              <option value="Singing">Singing</option>
+              <option value="Songwriting">Songwriting</option>
+              <option value="Music Production">Music Production</option>
+              <option value="Lyric Video">Lyric Video</option>
+              <option value="Collaboration">Collaboration</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="csubject">Subject <span class="req">*</span></label>
+            <input id="csubject" name="subject" maxlength="200" required />
+          </div>
+          <div>
+            <label for="cmessage">Message / Enquiry <span class="req">*</span></label>
+            <textarea id="cmessage" name="message" maxlength="4000" required></textarea>
+          </div>
+          <button type="submit">Send</button>
+          <p class="empty" id="cmsg" hidden></p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-foot">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-name">MORGAN BENJAMIN</div>
+        <p>Music after dark.</p>
+        <p id="socialsFoot"></p>
+      </div>
+      <div>
+        <h4>On this site</h4>
+        <a href="#home">Home</a>
+        <a href="#about">About</a>
+        <a href="#music">Music</a>
+        <a href="#testimonials">Testimonials</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <div>
+        <h4>Write</h4>
+        <a href="mailto:morganbenj75@gmail.com">morganbenj75@gmail.com</a>
+      </div>
+    </div>
+  </footer>
+
+  <div class="dock" id="dock">
+    <button class="play-btn" id="dockPlay" type="button">▶</button>
+    <div><strong id="dockTitle">After the Rain</strong></div>
+  </div>
+  <script src="/mb-main.js?v=17"></script>
+</body>
+</html>

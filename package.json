@@ -1,7 +1,18 @@
 {
-  "name": "adrian-cole-site",
-  "version": "1.0.0",
+  "name": "sites-box",
   "private": true,
-  "scripts": { "start": "node server.js" },
-  "dependencies": { "dotenv": "^16.4.5", "express": "^4.19.2", "pg": "^8.12.0" }
+  "version": "1.0.0",
+  "engines": { "node": "20.x" },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.16",
+    "pg": "^8.13.1"
+  }
 }

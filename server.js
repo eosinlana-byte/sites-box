@@ -31,10 +31,11 @@ Object.entries(PREFIX).forEach(([key, prefix]) => {
     res.cookie(COOKIE, key, { path: "/", sameSite: "lax", maxAge: 365 * 24 * 3600 * 1000 });
     next();
   });
-  app.get(prefix, (_req, res) => res.redirect(302, prefix + "/"));
-  app.get(prefix + "/", (_req, res) => {
+  const sendIndex = (_req, res) => {
     res.sendFile(path.join(__dirname, sites[key].index));
-  });
+  };
+  app.get(prefix, sendIndex);
+  app.get(prefix + "/", sendIndex);
 });
 
 app.use((req, res, next) => {

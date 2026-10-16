@@ -57,7 +57,9 @@ app.use((req, res, next) => {
 app.use(express.static(__dirname));
 app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
-Promise.all([morgan.init(), mirah.init(), smith.init()])
+morgan.init()
+  .then(() => mirah.init())
+  .then(() => smith.init())
   .then(() => {
     app.listen(PORT, "0.0.0.0", () => {
       console.log("Box live on 0.0.0.0:" + PORT);

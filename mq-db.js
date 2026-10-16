@@ -18,6 +18,7 @@ const pool = connectionString
       connectionString,
       ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
       max: 5,
+      options: "-csearch_path=mirah",
     })
   : null;
 
@@ -32,11 +33,7 @@ async function init() {
     console.warn("[db] No DATABASE_URL");
     return;
   }
-  pool.on("connect", (client) => {
-    client.query("SET search_path TO mirah").catch(() => {});
-  });
   await query("CREATE SCHEMA IF NOT EXISTS mirah");
-  await query("SET search_path TO mirah");
   await query(`
     CREATE TABLE IF NOT EXISTS media_files (
       id SERIAL PRIMARY KEY,

@@ -41,12 +41,9 @@ async function init() {
       connectionString,
       ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
       max: 5,
-    });
-    pgPool.on("connect", (client) => {
-      client.query("SET search_path TO morgan").catch(() => {});
+      options: "-csearch_path=morgan",
     });
     await pgPool.query("CREATE SCHEMA IF NOT EXISTS morgan");
-    await pgPool.query("SET search_path TO morgan");
   } else {
     const Database = require("better-sqlite3");
     const dir = path.join(__dirname, "data");

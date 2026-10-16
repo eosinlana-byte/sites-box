@@ -6,18 +6,14 @@ const { Pool } = require('pg');
 
 const app = express();
 const port = process.env.PORT || 3000;
-const pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }) : null;
+const pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, options: '-csearch_path=smith' }) : null;
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
 async function initDb() {
   if (!pool) return;
-  pool.on('connect', (client) => {
-    client.query('SET search_path TO smith').catch(() => {});
-  });
   await pool.query('CREATE SCHEMA IF NOT EXISTS smith');
-  await pool.query('SET search_path TO smith');
   await pool.query(`CREATE TABLE IF NOT EXISTS enquiries (id SERIAL PRIMARY KEY,name TEXT NOT NULL,email TEXT NOT NULL,project_type TEXT NOT NULL,budget TEXT,message TEXT NOT NULL,created_at TIMESTAMPTZ DEFAULT NOW())`);
   await pool.query(`CREATE TABLE IF NOT EXISTS portfolios (id SERIAL PRIMARY KEY,name TEXT NOT NULL,description TEXT NOT NULL,url TEXT,tags TEXT,image TEXT,quote TEXT,created_at TIMESTAMPTZ DEFAULT NOW())`);
   await pool.query('ALTER TABLE portfolios ADD COLUMN IF NOT EXISTS image TEXT');

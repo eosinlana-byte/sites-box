@@ -8,8 +8,8 @@ const { query, init, getSettings, usePg } = require("./mb-db");
 
 const app = express();
 const PORT = process.env.PORT || 8090;
-const ADMIN_USER = process.env.ADMIN_USER || "admin";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "MorganArts";
+const ADMIN_USER = process.env.MB_ADMIN_USER || "admin";
+const ADMIN_PASSWORD = process.env.MB_ADMIN_PASSWORD || "MorganArts";
 const SECRET = process.env.SECRET || crypto.randomBytes(32).toString("hex");
 const TOKEN_TTL = 7 * 24 * 3600 * 1000;
 

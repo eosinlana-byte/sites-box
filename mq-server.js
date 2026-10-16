@@ -7,8 +7,8 @@ const { query, init, hasDb } = require("./mq-db");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ADMIN_USER = process.env.ADMIN_USER || "admin";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Feranmi";
+const ADMIN_USER = process.env.MQ_ADMIN_USER || "admin";
+const ADMIN_PASSWORD = process.env.MQ_ADMIN_PASSWORD || "Feranmi";
 const SECRET = process.env.SECRET || "mira-quil-admin";
 const COOKIE = "mq_admin";
 

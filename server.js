@@ -36,6 +36,7 @@ Object.entries(PREFIX).forEach(([key, prefix]) => {
   };
   app.get(prefix, sendIndex);
   app.get(prefix + "/", sendIndex);
+  app.use(prefix, sites[key].app);
 });
 
 app.use((req, res, next) => {

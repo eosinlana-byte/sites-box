@@ -13,6 +13,7 @@ app.use(express.static(__dirname));
 
 async function initDb() {
   if (!pool) return;
+  try {
   await pool.query('CREATE SCHEMA IF NOT EXISTS smith');
   await pool.query(`CREATE TABLE IF NOT EXISTS enquiries (id SERIAL PRIMARY KEY,name TEXT NOT NULL,email TEXT NOT NULL,project_type TEXT NOT NULL,budget TEXT,message TEXT NOT NULL,created_at TIMESTAMPTZ DEFAULT NOW())`);
   await pool.query(`CREATE TABLE IF NOT EXISTS portfolios (id SERIAL PRIMARY KEY,name TEXT NOT NULL,description TEXT NOT NULL,url TEXT,tags TEXT,image TEXT,quote TEXT,created_at TIMESTAMPTZ DEFAULT NOW())`);
@@ -27,6 +28,9 @@ async function initDb() {
       'Okolibooks Creative','Creative studio site with portfolio, services, and admin tools.','https://okolibookscreative.onrender.com/','UI, ADMIN',
       'Mirah Tracy','Service website with structured pages and enquiry flow.','https://mirah-tracy.onrender.com/','DESIGN, FRONTEND'
     ]);
+  }
+  } catch (e) {
+    console.error('Smith db init:', e.message);
   }
 }
 

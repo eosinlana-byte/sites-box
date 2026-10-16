@@ -53,6 +53,7 @@ async function init() {
     sqlite.pragma("foreign_keys = ON");
   }
 
+  try {
   const serial = usePg ? "SERIAL PRIMARY KEY" : "INTEGER PRIMARY KEY AUTOINCREMENT";
   const blob = usePg ? "BYTEA" : "BLOB";
   const now = usePg ? "NOW()" : "CURRENT_TIMESTAMP";
@@ -161,6 +162,9 @@ async function init() {
     await query("INSERT INTO settings (key, value) VALUES ('about', $1)", [about]);
     await query("INSERT INTO settings (key, value) VALUES ('social', $1)", [social]);
     await query("INSERT INTO settings (key, value) VALUES ('seeded', '1')");
+  }
+  } catch (e) {
+    console.error("[db] Morgan init:", e.message);
   }
 }
 

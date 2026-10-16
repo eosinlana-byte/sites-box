@@ -57,15 +57,12 @@ app.use((req, res, next) => {
 app.use(express.static(__dirname));
 app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
-morgan.init()
-  .then(() => mirah.init())
-  .then(() => smith.init())
-  .then(() => {
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log("Box live on 0.0.0.0:" + PORT);
-    });
-  })
-  .catch((err) => {
-    console.error("Init failed:", err.message);
-    process.exit(1);
-  });
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("Box live on 0.0.0.0:" + PORT);
+  morgan
+    .init()
+    .then(() => mirah.init())
+    .then(() => smith.init())
+    .then(() => console.log("DB ready"))
+    .catch((err) => console.error("DB init:", err.message));
+});

@@ -33,6 +33,7 @@ async function init() {
     console.warn("[db] No DATABASE_URL");
     return;
   }
+  try {
   await query("CREATE SCHEMA IF NOT EXISTS mirah");
   await query(`
     CREATE TABLE IF NOT EXISTS media_files (
@@ -65,6 +66,9 @@ async function init() {
     );
   `);
   console.log("[db] Ready");
+  } catch (e) {
+    console.error("[db] Mirah init:", e.message);
+  }
 }
 
 module.exports = { query, init, hasDb: () => Boolean(pool) };

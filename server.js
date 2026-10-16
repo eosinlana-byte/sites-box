@@ -54,6 +54,16 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get("/favicon.ico", (req, res) => {
+  const key = req.cookies[COOKIE];
+  const file =
+    key === "smith" ? "sm-smith-mark.jpg" :
+    key === "mirah" ? "mq-favicon.png" :
+    key === "morgan" ? "mb-favicon.png" :
+    null;
+  if (!file) return res.status(204).end();
+  res.sendFile(path.join(__dirname, file));
+});
 app.use(express.static(__dirname));
 app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "index.html")));
 

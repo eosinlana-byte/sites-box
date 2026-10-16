@@ -178,4 +178,4 @@ $("#logout").onclick = async () => {
   await fetch("/admin/logout", { method: "POST" });
   location.reload();
 };
-load().catch(() => (location.href = "/smith/admin"));
+load().catch((e) => toast(e.message || "Could not load"));

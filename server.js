@@ -57,6 +57,9 @@ app.use((req, res, next) => {
 app.use(express.static(__dirname));
 app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
+process.on("unhandledRejection", (e) => console.error("unhandled:", e && e.message));
+process.on("uncaughtException", (e) => console.error("uncaught:", e && e.message));
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Box live on 0.0.0.0:" + PORT);
   morgan

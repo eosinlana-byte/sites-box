@@ -17,15 +17,22 @@ const pool = connectionString
   ? new Pool({
       connectionString,
       ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
-      max: 5,
-      options: "-csearch_path=mirah",
+      max: 2,
     })
   : null;
 
+if (pool) pool.on("error", (e) => console.error("mirah pg", e.message));
+
 async function query(text, params) {
   if (!pool) throw new Error("DATABASE_URL is not set");
-  const res = await pool.query(text, params);
-  return res.rows;
+  const client = await pool.connect();
+  try {
+    await client.query("SET search_path TO mirah");
+    const res = await client.query(text, params);
+    return res.rows;
+  } finally {
+    client.release();
+  }
 }
 
 async function init() {

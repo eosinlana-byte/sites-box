@@ -19,8 +19,14 @@ function pgString() {
 
 async function query(text, params = []) {
   if (usePg) {
-    const res = await pgPool.query(text, params);
-    return res.rows;
+    const client = await pgPool.connect();
+    try {
+      await client.query("SET search_path TO morgan");
+      const res = await client.query(text, params);
+      return res.rows;
+    } finally {
+      client.release();
+    }
   }
   const returning = /RETURNING/i.test(text);
   const sql = text.replace(/RETURNING \w+/i, "").replace(/\$(\d+)/g, "?");
@@ -40,9 +46,9 @@ async function init() {
     pgPool = new Pool({
       connectionString,
       ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
-      max: 5,
-      options: "-csearch_path=morgan",
+      max: 2,
     });
+    pgPool.on("error", (e) => console.error("morgan pg", e.message));
     await pgPool.query("CREATE SCHEMA IF NOT EXISTS morgan");
   } else {
     const Database = require("better-sqlite3");

@@ -166,8 +166,9 @@
       document.querySelectorAll("#portBody [data-edit]").forEach((b) => b.onclick = () => openPort(b.dataset.edit, decodeURIComponent(b.dataset.title)));
       document.querySelectorAll("#portBody [data-del]").forEach((b) => b.onclick = async () => {
         if (!confirm("Delete this?")) return;
-        await api("/api/admin/portfolio/" + b.dataset.del, { method: "DELETE" });
-        showToast("Deleted"); loadPort();
+        showToast("Deleted");
+        b.closest("tr").remove();
+        api("/api/admin/portfolio/" + b.dataset.del, { method: "DELETE" }).catch((e) => showToast(e.message));
       });
     }
     function openPort(id, title) {
@@ -188,9 +189,10 @@
       if (f) fd.append("image", f);
       try {
         const id = portId.value;
-        await api(id ? "/api/admin/portfolio/" + id : "/api/admin/portfolio", { method: "POST", body: fd });
         document.getElementById("portModal").classList.remove("open");
-        showToast("Saved"); loadPort();
+        showToast(id ? "Edited" : "Added");
+        api(id ? "/api/admin/portfolio/" + id : "/api/admin/portfolio", { method: "POST", body: fd }).then(() => loadPort()).catch((err) => { portErr.textContent = err.message; });
+        return;
       } catch (err) { portErr.textContent = err.message; }
     };
 
@@ -205,8 +207,9 @@
       document.querySelectorAll("#testiBody [data-e]").forEach((b) => b.onclick = () => openTesti(b.dataset.e, decodeURIComponent(b.dataset.q), decodeURIComponent(b.dataset.n)));
       document.querySelectorAll("#testiBody [data-d]").forEach((b) => b.onclick = async () => {
         if (!confirm("Delete this?")) return;
-        await api("/api/admin/testimonials/" + b.dataset.d, { method: "DELETE" });
-        showToast("Deleted"); loadTesti();
+        showToast("Deleted");
+        b.closest("tr").remove();
+        api("/api/admin/testimonials/" + b.dataset.d, { method: "DELETE" }).catch((e) => showToast(e.message));
       });
     }
     function openTesti(id, q, n) {
@@ -229,9 +232,10 @@
       if (f) fd.append("image", f);
       try {
         const id = testiId.value;
-        await api(id ? "/api/admin/testimonials/" + id : "/api/admin/testimonials", { method: "POST", body: fd });
         document.getElementById("testiModal").classList.remove("open");
-        showToast("Saved"); loadTesti();
+        showToast(id ? "Edited" : "Added");
+        api(id ? "/api/admin/testimonials/" + id : "/api/admin/testimonials", { method: "POST", body: fd }).then(() => loadTesti()).catch((err) => { testiErr.textContent = err.message; });
+        return;
       } catch (err) { testiErr.textContent = err.message; }
     };
 
@@ -244,8 +248,9 @@
       ).join("") || "<p>No enquiries yet.</p>";
       document.querySelectorAll("#enqList [data-x]").forEach((b) => b.onclick = async () => {
         if (!confirm("Delete?")) return;
-        await api("/api/admin/enquiries/" + b.dataset.x, { method: "DELETE" });
-        loadEnq();
+        showToast("Deleted");
+        b.closest("div").remove();
+        api("/api/admin/enquiries/" + b.dataset.x, { method: "DELETE" }).catch((e) => showToast(e.message));
       });
     }
 

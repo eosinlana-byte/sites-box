@@ -32,10 +32,22 @@ function toast(msg, type = "ok") {
 function showApp(on) {
   $("#loginView").hidden = on;
   $("#appView").hidden = !on;
-  if (on) loadView(currentView);
+  if (on) {
+    Promise.all([
+      api("/api/admin/tracks"),
+      api("/api/admin/works"),
+      api("/api/admin/enquiries"),
+    ]).then(([tracks, works, enqs]) => {
+      cache.tracks = tracks;
+      cache.works = works;
+      cache.enquiries = enqs;
+      loadView(currentView);
+    }).catch(() => loadView(currentView));
+  }
 }
 
 let currentView = "dashboard";
+const cache = { tracks: [], works: [], enquiries: [] };
 const TITLES = {
   dashboard: "Dashboard",
   tracks: "Tracks",
@@ -100,20 +112,19 @@ function row(title, sub, id, kind) {
   wrap.innerHTML = `<div class="list-row__main"><div class="list-row__title"></div><div class="list-row__sub"></div></div><div class="list-row__actions"><button type="button" class="btn btn--danger btn--sm">Delete</button></div>`;
   wrap.querySelector(".list-row__title").textContent = title;
   wrap.querySelector(".list-row__sub").textContent = sub || "";
-  wrap.querySelector("button").onclick = async () => {
+    wrap.querySelector("button").onclick = async () => {
     if (!confirm("Delete this?")) return;
-    await api("/api/admin/" + kind + "/" + id, { method: "DELETE" });
-    loadView(currentView);
+    toast("Deleted");
+    api("/api/admin/" + kind + "/" + id, { method: "DELETE" }).then(() => loadView(currentView)).catch((e) => toast(e.message, "err"));
+    wrap.remove();
   };
   return wrap;
 }
 
 async function renderDashboard(c) {
-  const [tracks, folio, enqs] = await Promise.all([
-    api("/api/admin/tracks"),
-    api("/api/admin/works"),
-    api("/api/admin/enquiries"),
-  ]);
+  const tracks = cache.tracks;
+  const folio = cache.works;
+  const enqs = cache.enquiries;
   const unread = enqs.filter((e) => e.status !== "read").length;
   const badge = $("#enqBadge");
   if (unread) {
@@ -300,8 +311,7 @@ function packTrackLinks(body) {
 async function openTrackForm(id) {
   let data = {};
   if (id) {
-    const all = await api("/api/admin/tracks");
-    data = all.find((x) => String(x.id) === String(id)) || {};
+    data = cache.tracks.find((x) => String(x.id) === String(id)) || {};
   }
   openModal(id ? "Edit" : "Add New", `
     <form id="entityForm">${trackForm(data)}</form>
@@ -312,20 +322,24 @@ async function openTrackForm(id) {
       toast("Enter a title", "err");
       return;
     }
-    try {
-      if (id) await api("/api/admin/tracks/" + id, { method: "PATCH", body: JSON.stringify(body) });
-      else await api("/api/admin/tracks", { method: "POST", body: JSON.stringify(body) });
-      closeModal();
-      toast("Saved");
-      loadView("tracks");
-    } catch (e) {
-      toast(e.message, "err");
-    }
+    closeModal();
+    toast(id ? "Edited" : "Added");
+    if (id) cache.tracks = cache.tracks.map((x) => (String(x.id) === String(id) ? { ...x, ...body } : x));
+    else cache.tracks = [...cache.tracks, { id: "tmp-" + Date.now(), ...body }];
+    loadView("tracks");
+    (id
+      ? api("/api/admin/tracks/" + id, { method: "PATCH", body: JSON.stringify(body) })
+      : api("/api/admin/tracks", { method: "POST", body: JSON.stringify(body) })
+    ).then((saved) => {
+      if (saved && saved.id) {
+        cache.tracks = cache.tracks.map((x) => (x.title === body.title ? { ...x, ...saved } : x));
+      }
+    }).catch((e) => toast(e.message, "err"));
   };
 }
 
 async function renderTracks(c) {
-  const rows = await api("/api/admin/tracks");
+  const rows = cache.tracks;
   c.innerHTML = `
     <div class="panel">
       <div class="panel__head">
@@ -346,8 +360,10 @@ async function renderTracks(c) {
     wrap.querySelector(".btn--ghost").onclick = () => openTrackForm(r.id);
     wrap.querySelector(".btn--danger").onclick = async () => {
       if (!confirm("Delete this?")) return;
-      await api("/api/admin/tracks/" + r.id, { method: "DELETE" });
-      loadView("tracks");
+      cache.tracks = cache.tracks.filter((x) => String(x.id) !== String(r.id));
+      toast("Deleted");
+      wrap.remove();
+      api("/api/admin/tracks/" + r.id, { method: "DELETE" }).catch((e) => toast(e.message, "err"));
     };
     body.appendChild(wrap);
   });
@@ -379,8 +395,7 @@ function togglePortfolioType() {
 async function openPortfolioForm(id) {
   let data = {};
   if (id) {
-    const all = await api("/api/admin/works");
-    data = all.find((x) => String(x.id) === String(id)) || {};
+    data = cache.works.find((x) => String(x.id) === String(id)) || {};
   }
   openModal(id ? "Edit" : "Add New", `
     <form id="entityForm">${portfolioForm(data)}</form>
@@ -401,20 +416,20 @@ async function openPortfolioForm(id) {
       toast("Write some text", "err");
       return;
     }
-    try {
-      if (id) await api("/api/admin/works/" + id, { method: "PATCH", body: JSON.stringify(body) });
-      else await api("/api/admin/works", { method: "POST", body: JSON.stringify(body) });
-      closeModal();
-      toast("Saved");
-      loadView("portfolio");
-    } catch (e) {
-      toast(e.message, "err");
-    }
+    closeModal();
+    toast(id ? "Edited" : "Added");
+    if (id) cache.works = cache.works.map((x) => (String(x.id) === String(id) ? { ...x, ...body } : x));
+    else cache.works = [...cache.works, { id: "tmp-" + Date.now(), ...body }];
+    loadView("portfolio");
+    (id
+      ? api("/api/admin/works/" + id, { method: "PATCH", body: JSON.stringify(body) })
+      : api("/api/admin/works", { method: "POST", body: JSON.stringify(body) })
+    ).catch((e) => toast(e.message, "err"));
   };
 }
 
 async function renderPortfolio(c) {
-  const rows = await api("/api/admin/works");
+  const rows = cache.works;
   c.innerHTML = `
     <div class="panel">
       <div class="panel__head">
@@ -435,15 +450,17 @@ async function renderPortfolio(c) {
     wrap.querySelector(".btn--ghost").onclick = () => openPortfolioForm(r.id);
     wrap.querySelector(".btn--danger").onclick = async () => {
       if (!confirm("Delete this?")) return;
-      await api("/api/admin/works/" + r.id, { method: "DELETE" });
-      loadView("portfolio");
+      cache.works = cache.works.filter((x) => String(x.id) !== String(r.id));
+      toast("Deleted");
+      wrap.remove();
+      api("/api/admin/works/" + r.id, { method: "DELETE" }).catch((e) => toast(e.message, "err"));
     };
     body.appendChild(wrap);
   });
 }
 
 async function renderEnquiries(c) {
-  const items = await api("/api/admin/enquiries");
+  const items = cache.enquiries;
   const newCount = items.filter((e) => e.status === "new").length;
   const badge = $("#enqBadge");
   if (newCount) {

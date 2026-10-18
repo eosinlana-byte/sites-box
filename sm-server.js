@@ -31,6 +31,21 @@ async function initDb() {
   await dbq('ALTER TABLE portfolios ADD COLUMN IF NOT EXISTS quote TEXT');
   await dbq(`CREATE TABLE IF NOT EXISTS testimonials (id SERIAL PRIMARY KEY,quote TEXT,client TEXT NOT NULL,role TEXT,image TEXT,created_at TIMESTAMPTZ DEFAULT NOW())`);
   await dbq('ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS image TEXT');
+  await dbq('ALTER TABLE portfolios ADD COLUMN IF NOT EXISTS result TEXT');
+  await dbq(`CREATE TABLE IF NOT EXISTS subscribers (id SERIAL PRIMARY KEY,email TEXT NOT NULL,created_at TIMESTAMPTZ DEFAULT NOW())`);
+  await dbq(`CREATE TABLE IF NOT EXISTS posts (id SERIAL PRIMARY KEY,slug TEXT UNIQUE NOT NULL,title TEXT NOT NULL,excerpt TEXT DEFAULT '',body TEXT DEFAULT '',created_at TIMESTAMPTZ DEFAULT NOW())`);
+  const postCount = await dbq('SELECT COUNT(*)::int AS count FROM posts');
+  if (postCount.rows[0].count === 0) {
+    await dbq('INSERT INTO posts (slug,title,excerpt,body) VALUES ($1,$2,$3,$4)', [
+      'before-i-build',
+      'What I need before I build',
+      'Pages, examples, deadline, and who will update the site after launch.',
+      'A website goes faster when pages, examples, deadline, and who updates it are clear on day one.'
+    ]);
+  }
+  await dbq(`UPDATE portfolios SET result='Live site with admin, songs, and enquiries.' WHERE name='Jackson Ryder' AND (result IS NULL OR result='')`);
+  await dbq(`UPDATE portfolios SET result='Studio can update work without a developer for every change.' WHERE name='Okolibooks Creative' AND (result IS NULL OR result='')`);
+  await dbq(`UPDATE portfolios SET result='Authors can send a brief from the site.' WHERE name='Mirah Tracy' AND (result IS NULL OR result='')`);
   const count = await dbq('SELECT COUNT(*)::int AS count FROM portfolios');
   if (count.rows[0].count === 0) {
     await dbq('INSERT INTO portfolios (name, description, url, tags) VALUES ($1,$2,$3,$4),($5,$6,$7,$8),($9,$10,$11,$12)', [
@@ -46,8 +61,15 @@ async function initDb() {
 
 app.get('/api/content', async (req,res) => {
   if (!pool) return res.json({ portfolios: [], testimonials: [] });
-  try { const [p,t] = await Promise.all([dbq('SELECT * FROM portfolios ORDER BY id'), dbq('SELECT * FROM testimonials ORDER BY id DESC')]); res.json({ portfolios:p.rows, testimonials:t.rows }); }
-  catch (e) { console.error(e); res.status(500).json({ error:'Could not load content.' }); }
+  try {
+    const p = await dbq('SELECT * FROM portfolios ORDER BY id');
+    let t = { rows: [] };
+    try { t = await dbq('SELECT * FROM testimonials ORDER BY id DESC'); } catch (_) {}
+    res.json({ portfolios: p.rows, testimonials: t.rows });
+  } catch (e) {
+    console.error(e);
+    res.json({ portfolios: [], testimonials: [] });
+  }
 });
 app.post('/api/enquiries', async (req,res) => {
   const {name,email,projectType,budget,message}=req.body;
@@ -63,8 +85,39 @@ function loggedIn(req){return cookieValue(req,'smith_admin')===sessionToken();}
 function loginPage(error=''){return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smith Michael Admin</title><style>${adminCss()}</style></head><body><main class="login"><h1>Smith Michael</h1><p>Admin login</p>${error?`<p class="error">${esc(error)}</p>`:''}<form method="post" action="/admin/login"><label>Username<input name="username" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button>SIGN IN</button></form></main></body></html>`;}
 function adminCss(){return `*{box-sizing:border-box}body{margin:0;background:#121212;color:#f4f1ea;font:14px Inter,Arial,sans-serif;padding:28px}.login{width:min(430px,100%);margin:8vh auto;background:#1b1b1b;border:1px solid rgba(244,241,234,.14);padding:34px}.login h1{font-size:30px;margin:0}.login p{color:#a3a3a3}.error{color:#ef927f!important}label{display:grid;gap:8px;color:#a3a3a3;margin:18px 0}input,textarea{width:100%;padding:11px;background:#121212;border:1px solid #555;color:#f4f1ea;font:inherit}button{background:#e8a54b;color:#121212;border:0;padding:11px 16px;font-weight:bold;cursor:pointer}.admin-wrap{max-width:1200px;margin:auto}.admin-head{display:flex;justify-content:space-between;align-items:center;gap:15px;border-bottom:1px solid rgba(244,241,234,.14);padding-bottom:18px}.admin-head h1{margin:0}.panel{background:#1b1b1b;border:1px solid rgba(244,241,234,.14);padding:22px;margin:22px 0}.panel h2{margin-top:0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.grid .full{grid-column:1/-1}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{text-align:left;vertical-align:top;padding:11px 8px;border-bottom:1px solid rgba(244,241,234,.14)}th{color:#e8a54b;font-size:12px}td{color:#d0d0d0}.actions{display:flex;gap:8px;flex-wrap:wrap}.danger{background:#9b3e35;color:#fff}.muted{color:#a3a3a3}@media(max-width:700px){.grid{grid-template-columns:1fr}.grid .full{grid-column:auto}table{display:block;overflow:auto;white-space:nowrap}}`;}
 
+app.post('/api/subscribe', async (req,res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  if (!email || !email.includes('@')) return res.status(400).json({ ok:false, error:'Enter a valid email.' });
+  if (!pool) return res.status(503).json({ ok:false, error:'Signup is not connected yet.' });
+  try {
+    await dbq('INSERT INTO subscribers (email) VALUES ($1)', [email]);
+    res.json({ ok:true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok:false, error:'Could not save.' });
+  }
+});
+app.get('/api/posts', async (_req,res) => {
+  if (!pool) return res.json({ items: [] });
+  try {
+    const r = await dbq('SELECT slug,title,excerpt,created_at FROM posts ORDER BY id DESC');
+    res.json({ items: r.rows });
+  } catch (e) {
+    res.json({ items: [] });
+  }
+});
+app.get('/blog', (_req,res) => res.sendFile(path.join(__dirname,'sm-blog.html')));
+app.get('/blog/before-i-build', (_req,res) => res.sendFile(path.join(__dirname,'sm-blog-before.html')));
 app.get('/admin',(req,res)=>{if(!loggedIn(req))return res.status(200).send(loginPage()); res.sendFile(path.join(__dirname,'sm-admin.html'));});
-app.get('/api/admin/content',async(req,res)=>{if(!loggedIn(req))return res.status(401).json({error:'Login required'});if(!pool)return res.json({portfolios:[],testimonials:[],enquiries:[]});try{const [p,t,e]=await Promise.all([dbq('SELECT id,name,description,url,tags,quote FROM portfolios ORDER BY id'),dbq('SELECT id,client,role FROM testimonials ORDER BY id DESC'),dbq('SELECT * FROM enquiries ORDER BY created_at DESC')]);res.json({portfolios:p.rows,testimonials:t.rows,enquiries:e.rows});}catch(e){console.error('smith admin content',e.message);res.status(500).json({error:'Could not load content.'});}});
+app.get('/api/admin/content',async(req,res)=>{
+  if(!loggedIn(req))return res.status(401).json({error:'Login required'});
+  const out={portfolios:[],testimonials:[],enquiries:[]};
+  if(!pool)return res.json(out);
+  try{ const p=await dbq('SELECT * FROM portfolios ORDER BY id'); out.portfolios=p.rows; }catch(e){ console.error('smith portfolios',e.message); }
+  try{ const t=await dbq('SELECT * FROM testimonials ORDER BY id DESC'); out.testimonials=t.rows; }catch(e){ console.error('smith testimonials',e.message); }
+  try{ const e=await dbq('SELECT * FROM enquiries ORDER BY created_at DESC'); out.enquiries=e.rows; }catch(e){ console.error('smith enquiries',e.message); }
+  res.json(out);
+});
 app.get('/api/admin/portfolio/:id/image',async(req,res)=>{if(!loggedIn(req))return res.status(401).json({error:'Login required'});const r=await dbq('SELECT image FROM portfolios WHERE id=$1',[req.params.id]);res.json({image:r.rows[0]?.image||''});});
 app.get('/api/admin/testimonial/:id/image',async(req,res)=>{if(!loggedIn(req))return res.status(401).json({error:'Login required'});const r=await dbq('SELECT image FROM testimonials WHERE id=$1',[req.params.id]);res.json({image:r.rows[0]?.image||''});});
 app.post('/api/admin/portfolio',async(req,res)=>{if(!loggedIn(req))return res.status(401).json({error:'Login required'});const {name,description,url,tags,image,quote}=req.body;const r=await dbq('INSERT INTO portfolios(name,description,url,tags,image,quote) VALUES($1,$2,$3,$4,$5,$6) RETURNING *',[name,description,url||'',tags||'',image||'',quote||'']);res.json(r.rows[0]);});

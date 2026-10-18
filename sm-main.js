@@ -1,46 +1,117 @@
-const heroVideo = document.querySelector('.hero-video');
-const codePoster = document.querySelector('.code-poster');
+const heroVideo = document.querySelector(".hero-video");
+const codePoster = document.querySelector(".code-poster");
 if (heroVideo) {
-  heroVideo.addEventListener('canplay', () => { if (codePoster) codePoster.style.display = 'none'; });
-}
-const form = document.querySelector('#contact-form');
-const status = document.querySelector('#form-status');
-if (form) {
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    status.textContent = 'Saving enquiry...';
-    const data = Object.fromEntries(new FormData(form));
-    try {
-      const response = await fetch('/api/enquiries', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Could not save enquiry.');
-      form.reset();
-      status.textContent = 'Enquiry saved. Thank you.';
-    } catch (error) { status.textContent = error.message; }
+  heroVideo.addEventListener("canplay", () => {
+    if (codePoster) codePoster.style.display = "none";
   });
 }
+
+const wa = String(document.body.getAttribute("data-whatsapp") || "").replace(/\D/g, "");
+if (wa.length >= 10) {
+  const href = "https://wa.me/" + wa;
+  ["waFloat", "waInline"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.href = href;
+    el.hidden = false;
+  });
+}
+
+const form = document.querySelector("#contact-form");
+const status = document.querySelector("#form-status");
+if (form) {
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    status.textContent = "Saving enquiry...";
+    const data = Object.fromEntries(new FormData(form));
+    try {
+      const response = await fetch("/api/enquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not save enquiry.");
+      form.reset();
+      status.textContent = "Enquiry saved. I reply within 24 hours on weekdays.";
+    } catch (error) {
+      status.textContent = error.message;
+    }
+  });
+}
+
+const signup = document.querySelector("#signup-form");
+const signupStatus = document.querySelector("#signup-status");
+if (signup) {
+  signup.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    signupStatus.textContent = "Saving...";
+    const email = new FormData(signup).get("email");
+    try {
+      const response = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not save.");
+      signup.reset();
+      signupStatus.textContent = "Saved. I will send the brief to that email.";
+    } catch (error) {
+      signupStatus.textContent = error.message;
+    }
+  });
+}
+
 async function loadManagedContent() {
-  const work = document.querySelector('.real-work');
-  const testimonials = document.querySelector('.testimonial-grid');
+  const work = document.querySelector(".real-work");
+  const testimonials = document.querySelector(".testimonial-grid");
   try {
-    const response = await fetch('/api/content');
+    const response = await fetch("/api/content");
     if (!response.ok) return;
     const data = await response.json();
-    if (work && data.portfolios.length) {
-      work.innerHTML = data.portfolios.map((item, index) => {
-        const colors = ['jackson-card','okolibooks-card','mirah-card'];
-        const tags = String(item.tags || '').split(',').map(tag => tag.trim()).filter(Boolean).map(tag => `<span>${tag}</span>`).join('');
-        return `<article class="project"><a class="project-link" href="${escapeHtml(item.url || '#')}" target="_blank" rel="noreferrer"><div class="live-card ${colors[index % colors.length]}">${item.image ? `<img class="portfolio-thumb" src="${item.image}" alt="">` : item.quote ? `<blockquote class="portfolio-quote">“${escapeHtml(item.quote)}”</blockquote>` : ''}<span>${escapeHtml(item.name)}</span><em>OPEN SITE ↗</em></div></a><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p><div class="tags">${tags}</div></article>`;
-      }).join('');
+    if (work && data.portfolios && data.portfolios.length) {
+      work.innerHTML = data.portfolios
+        .map((item, index) => {
+          const colors = ["jackson-card", "okolibooks-card", "mirah-card"];
+          const tags = String(item.tags || "")
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean)
+            .map((tag) => `<span>${tag}</span>`)
+            .join("");
+          const result = item.result
+            ? `<p class="result">${escapeHtml(item.result)}</p>`
+            : "";
+          return `<article class="project"><a class="project-link" href="${escapeHtml(item.url || "#")}" target="_blank" rel="noreferrer"><div class="live-card ${colors[index % colors.length]}">${item.image ? `<img class="portfolio-thumb" src="${item.image}" alt="">` : item.quote ? `<blockquote class="portfolio-quote">“${escapeHtml(item.quote)}”</blockquote>` : ""}<span>${escapeHtml(item.name)}</span><em>OPEN SITE ↗</em></div></a><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p>${result}<div class="tags">${tags}</div></article>`;
+        })
+        .join("");
     }
-    if (testimonials && data.testimonials.length) {
-      testimonials.innerHTML = data.testimonials.map(item => `<figure class="testimonial-image-card">${item.image ? `<img src="${item.image}" alt="${escapeHtml(item.client)} testimonial">` : ''}<figcaption>${escapeHtml(item.client)}${item.role ? `, ${escapeHtml(item.role)}` : ''}</figcaption></figure>`).join('');
+    const testiWrap = document.getElementById("testimonials");
+    if (testimonials && data.testimonials && data.testimonials.length) {
+      if (testiWrap) testiWrap.hidden = false;
+      testimonials.innerHTML = data.testimonials
+        .map(
+          (item) =>
+            `<figure class="testimonial-image-card">${item.image ? `<img src="${item.image}" alt="${escapeHtml(item.client)} testimonial">` : `<blockquote><p>${escapeHtml(item.quote || "")}</p><cite>${escapeHtml(item.client)}${item.role ? `, ${escapeHtml(item.role)}` : ""}</cite></blockquote>`}<figcaption>${escapeHtml(item.client)}${item.role ? `, ${escapeHtml(item.role)}` : ""}</figcaption></figure>`
+        )
+        .join("");
+    } else if (testiWrap) {
+      testiWrap.hidden = true;
     }
   } catch (_) {}
 }
-function escapeHtml(value) { return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+}
 loadManagedContent();
 const links = [...document.querySelectorAll('nav a[href^="#"]')];
-const sections = [...document.querySelectorAll('main section[id]')];
-const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) links.forEach(link => link.classList.toggle('active', link.getAttribute('href') === `#${entry.target.id}`)); }), { rootMargin: '-35% 0px -55% 0px' });
-sections.forEach(section => observer.observe(section));
+const sections = [...document.querySelectorAll("main section[id]")];
+const observer = new IntersectionObserver(
+  (entries) =>
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) links.forEach((link) => link.classList.toggle("active", link.getAttribute("href") === `#${entry.target.id}`));
+    }),
+  { rootMargin: "-35% 0px -55% 0px" }
+);
+sections.forEach((section) => observer.observe(section));

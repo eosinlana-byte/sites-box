@@ -6,17 +6,6 @@ if (heroVideo) {
   });
 }
 
-const wa = String(document.body.getAttribute("data-whatsapp") || "").replace(/\D/g, "");
-if (wa.length >= 10) {
-  const href = "https://wa.me/" + wa;
-  ["waFloat", "waInline"].forEach((id) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.href = href;
-    el.hidden = false;
-  });
-}
-
 const form = document.querySelector("#contact-form");
 const status = document.querySelector("#form-status");
 if (form) {
@@ -33,7 +22,7 @@ if (form) {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not save enquiry.");
       form.reset();
-      status.textContent = "Enquiry saved. I reply within 24 hours on weekdays.";
+      status.textContent = "Enquiry saved. I reply within 24 hours.";
     } catch (error) {
       status.textContent = error.message;
     }
@@ -87,7 +76,10 @@ async function loadManagedContent() {
           };
           const resultLine = proof[item.name] || item.result || "";
           const result = resultLine ? `<p class="result">${escapeHtml(resultLine)}</p>` : "";
-          return `<article class="project"><a class="project-link" href="${escapeHtml(item.url || "#")}" target="_blank" rel="noreferrer"><div class="live-card ${colors[index % colors.length]}">${item.image ? `<img class="portfolio-thumb" src="${item.image}" alt="">` : item.quote ? `<blockquote class="portfolio-quote">“${escapeHtml(item.quote)}”</blockquote>` : ""}<span>${escapeHtml(item.name)}</span><em>OPEN SITE ↗</em></div></a><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p>${result}<div class="tags">${tags}</div></article>`;
+          let host = "";
+          try { host = item.url ? new URL(item.url).host + (new URL(item.url).pathname !== "/" ? new URL(item.url).pathname.replace(/\/$/, "") : "") : ""; } catch (_) {}
+          const urlLine = host ? `<p class="project-url">${escapeHtml(host)}</p>` : "";
+          return `<article class="project"><a class="project-link" href="${escapeHtml(item.url || "#")}" target="_blank" rel="noreferrer"><div class="live-card ${colors[index % colors.length]}">${item.image ? `<img class="portfolio-thumb" src="${item.image}" alt="">` : item.quote ? `<blockquote class="portfolio-quote">“${escapeHtml(item.quote)}”</blockquote>` : ""}<span>${escapeHtml(item.name)}</span><em>OPEN SITE ↗</em></div></a><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p>${result}${urlLine}<div class="tags">${tags}</div></article>`;
         })
         .join("");
     }

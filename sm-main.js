@@ -14,7 +14,7 @@ if (form) {
     status.textContent = "Saving enquiry...";
     const data = Object.fromEntries(new FormData(form));
     try {
-      const response = await fetch("/api/enquiries", {
+      const response = await fetch("/smith/api/enquiries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -37,7 +37,7 @@ if (signup) {
     signupStatus.textContent = "Saving...";
     const email = new FormData(signup).get("email");
     try {
-      const response = await fetch("/api/subscribe", {
+      const response = await fetch("/smith/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -56,7 +56,7 @@ async function loadManagedContent() {
   const work = document.querySelector(".real-work");
   const testimonials = document.querySelector(".testimonial-grid");
   try {
-    const response = await fetch("/api/content");
+    const response = await fetch("/smith/api/content");
     if (!response.ok) return;
     const data = await response.json();
     if (work && data.portfolios && data.portfolios.length) {
@@ -89,8 +89,10 @@ async function loadManagedContent() {
         .join("");
     }
     const testiWrap = document.getElementById("testimonials");
+    const navTesti = document.getElementById("navTesti");
     if (testimonials && data.testimonials && data.testimonials.length) {
       if (testiWrap) testiWrap.hidden = false;
+      if (navTesti) navTesti.hidden = false;
       testimonials.innerHTML = data.testimonials
         .map(
           (item) =>

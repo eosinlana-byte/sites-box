@@ -8,6 +8,7 @@ const toast = (text) => {
 const esc = (v) =>
   String(v || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 async function api(url, options = {}) {
+  if (url.startsWith("/api") || url.startsWith("/admin")) url = "/smith" + url;
   const r = await fetch(url, {
     credentials: "same-origin",
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
@@ -175,7 +176,7 @@ document.querySelectorAll(".tab").forEach((tab) => {
   };
 });
 $("#logout").onclick = async () => {
-  await fetch("/admin/logout", { method: "POST" });
+  await fetch("/smith/admin/logout", { method: "POST" });
   location.reload();
 };
 load().catch((e) => toast(e.message || "Could not load"));

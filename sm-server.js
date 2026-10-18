@@ -45,7 +45,7 @@ async function initDb() {
   }
   await dbq(`UPDATE portfolios SET result='Live site with admin, songs, and enquiries.' WHERE name='Jackson Ryder' AND (result IS NULL OR result='')`);
   await dbq(`UPDATE portfolios SET result='Studio can update work without a developer for every change.' WHERE name='Okolibooks Creative' AND (result IS NULL OR result='')`);
-  await dbq(`UPDATE portfolios SET result='Authors can send a brief from the site.' WHERE name='Mirah Tracy' AND (result IS NULL OR result='')`);
+  await dbq(`UPDATE portfolios SET result='Authors can send a brief from the site.', url='https://sites-box.onrender.com/mirah' WHERE name='Mirah Tracy'`);
   const count = await dbq('SELECT COUNT(*)::int AS count FROM portfolios');
   if (count.rows[0].count === 0) {
     await dbq('INSERT INTO portfolios (name, description, url, tags) VALUES ($1,$2,$3,$4),($5,$6,$7,$8),($9,$10,$11,$12)', [

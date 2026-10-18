@@ -76,10 +76,15 @@ async function loadManagedContent() {
           };
           const resultLine = proof[item.name] || item.result || "";
           const result = resultLine ? `<p class="result">${escapeHtml(resultLine)}</p>` : "";
+          const urlFix = { "Mirah Tracy": "https://sites-box.onrender.com/mirah" };
+          const liveUrl = urlFix[item.name] || item.url || "#";
           let host = "";
-          try { host = item.url ? new URL(item.url).host + (new URL(item.url).pathname !== "/" ? new URL(item.url).pathname.replace(/\/$/, "") : "") : ""; } catch (_) {}
+          try {
+            const u = new URL(liveUrl);
+            host = u.host + (u.pathname !== "/" ? u.pathname.replace(/\/$/, "") : "");
+          } catch (_) {}
           const urlLine = host ? `<p class="project-url">${escapeHtml(host)}</p>` : "";
-          return `<article class="project"><a class="project-link" href="${escapeHtml(item.url || "#")}" target="_blank" rel="noreferrer"><div class="live-card ${colors[index % colors.length]}">${item.image ? `<img class="portfolio-thumb" src="${item.image}" alt="">` : item.quote ? `<blockquote class="portfolio-quote">“${escapeHtml(item.quote)}”</blockquote>` : ""}<span>${escapeHtml(item.name)}</span><em>OPEN SITE ↗</em></div></a><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p>${result}${urlLine}<div class="tags">${tags}</div></article>`;
+          return `<article class="project"><a class="project-link" href="${escapeHtml(liveUrl)}" target="_blank" rel="noreferrer"><div class="live-card ${colors[index % colors.length]}">${item.image ? `<img class="portfolio-thumb" src="${item.image}" alt="">` : item.quote ? `<blockquote class="portfolio-quote">“${escapeHtml(item.quote)}”</blockquote>` : ""}<span>${escapeHtml(item.name)}</span><em>OPEN SITE ↗</em></div></a><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p>${result}${urlLine}<div class="tags">${tags}</div></article>`;
         })
         .join("");
     }

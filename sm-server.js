@@ -73,7 +73,7 @@ app.get('/api/content', async (req,res) => {
 });
 app.post('/api/enquiries', async (req,res) => {
   const {name,email,projectType,budget,message}=req.body;
-  if(!name||!email||!projectType||!message) return res.status(400).json({ok:false,error:'Please complete the required fields.'});
+  if(!name||!email||!message) return res.status(400).json({ok:false,error:'Please complete the required fields.'});
   if(!pool) return res.status(503).json({ok:false,error:'Form is not connected to email yet.'});
   try { await dbq('INSERT INTO enquiries (name,email,project_type,budget,message) VALUES ($1,$2,$3,$4,$5)',[name,email,projectType,budget||'',message]); res.json({ok:true}); }
   catch(e){ console.error(e); res.status(500).json({ok:false,error:'The enquiry could not be saved. Please try again.'}); }

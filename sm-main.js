@@ -80,9 +80,13 @@ async function loadManagedContent() {
             .filter(Boolean)
             .map((tag) => `<span>${tag}</span>`)
             .join("");
-          const result = item.result
-            ? `<p class="result">${escapeHtml(item.result)}</p>`
-            : "";
+          const proof = {
+            "Jackson Ryder": "Mobile-first • Music player + admin • Contact form",
+            "Okolibooks Creative": "Mobile-first • Admin for work • Enquiry form",
+            "Mirah Tracy": "Mobile layout • Enquiry form • Service pages",
+          };
+          const resultLine = proof[item.name] || item.result || "";
+          const result = resultLine ? `<p class="result">${escapeHtml(resultLine)}</p>` : "";
           return `<article class="project"><a class="project-link" href="${escapeHtml(item.url || "#")}" target="_blank" rel="noreferrer"><div class="live-card ${colors[index % colors.length]}">${item.image ? `<img class="portfolio-thumb" src="${item.image}" alt="">` : item.quote ? `<blockquote class="portfolio-quote">“${escapeHtml(item.quote)}”</blockquote>` : ""}<span>${escapeHtml(item.name)}</span><em>OPEN SITE ↗</em></div></a><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p>${result}<div class="tags">${tags}</div></article>`;
         })
         .join("");

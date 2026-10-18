@@ -45,7 +45,7 @@ if (signup) {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not save.");
       signup.reset();
-      signupStatus.textContent = "Saved. I will send the brief to that email.";
+      signupStatus.innerHTML = 'Saved. <a href="/smith/checklist">Open the checklist ↗</a>';
     } catch (error) {
       signupStatus.textContent = error.message;
     }

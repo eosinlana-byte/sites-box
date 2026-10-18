@@ -108,6 +108,10 @@ app.get('/api/posts', async (_req,res) => {
 });
 app.get('/blog', (_req,res) => res.sendFile(path.join(__dirname,'sm-blog.html')));
 app.get('/blog/before-i-build', (_req,res) => res.sendFile(path.join(__dirname,'sm-blog-before.html')));
+app.get('/blog/landing-or-full', (_req,res) => res.sendFile(path.join(__dirname,'sm-blog-landing.html')));
+app.get('/blog/contact-form', (_req,res) => res.sendFile(path.join(__dirname,'sm-blog-form.html')));
+app.get('/blog/after-launch', (_req,res) => res.sendFile(path.join(__dirname,'sm-blog-after.html')));
+app.get('/checklist', (_req,res) => res.sendFile(path.join(__dirname,'sm-checklist.html')));
 app.get('/admin',(req,res)=>{if(!loggedIn(req))return res.status(200).send(loginPage()); res.sendFile(path.join(__dirname,'sm-admin.html'));});
 app.get('/api/admin/content',async(req,res)=>{
   if(!loggedIn(req))return res.status(401).json({error:'Login required'});

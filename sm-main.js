@@ -65,7 +65,11 @@ async function loadManagedContent() {
           work.appendChild(article);
         });
     }
-    const items = (data.testimonials || []).filter((item) => String(item.quote || "").trim() || item.image);
+    const items = (data.testimonials || []).filter((item) => {
+      const q = String(item.quote || "").trim();
+      if (/fddxtyssutydty/i.test(q)) return false;
+      return q || item.image;
+    });
     if (quotes && items.length) {
       if (testiWrap) {
         testiWrap.hidden = false;

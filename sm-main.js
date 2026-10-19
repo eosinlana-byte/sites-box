@@ -1,10 +1,28 @@
-const heroVideo = document.querySelector(".hero-video");
-const codePoster = document.querySelector(".code-poster");
-if (heroVideo) {
-  heroVideo.addEventListener("canplay", () => {
-    if (codePoster) codePoster.style.display = "none";
+const navToggle = document.getElementById("navToggle");
+const header = document.querySelector(".site-header");
+if (navToggle && header) {
+  navToggle.onclick = () => {
+    const open = header.classList.toggle("open");
+    navToggle.textContent = open ? "Close" : "Menu";
+  };
+  document.querySelectorAll("#siteNav a").forEach((a) => {
+    a.addEventListener("click", () => {
+      header.classList.remove("open");
+      navToggle.textContent = "Menu";
+    });
   });
 }
+
+document.querySelectorAll(".work-filters .chip").forEach((chip) => {
+  chip.onclick = () => {
+    document.querySelectorAll(".work-filters .chip").forEach((c) => c.classList.remove("on"));
+    chip.classList.add("on");
+    const f = chip.dataset.filter;
+    document.querySelectorAll(".case-list .case").forEach((card) => {
+      card.classList.toggle("hidden-cat", f !== "all" && card.dataset.cat !== f);
+    });
+  };
+});
 
 const form = document.querySelector("#contact-form");
 const status = document.querySelector("#form-status");
@@ -29,27 +47,8 @@ if (form) {
   });
 }
 
-const signup = document.querySelector("#signup-form");
-const signupStatus = document.querySelector("#signup-status");
-if (signup) {
-  signup.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    signupStatus.textContent = "Saving...";
-    const email = new FormData(signup).get("email");
-    try {
-      const response = await fetch("/smith/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Could not save.");
-      signup.reset();
-      signupStatus.innerHTML = 'Saved. <a href="/smith/checklist">Open the checklist ↗</a>';
-    } catch (error) {
-      signupStatus.textContent = error.message;
-    }
-  });
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 }
 
 async function loadManagedContent() {
@@ -59,47 +58,29 @@ async function loadManagedContent() {
     const response = await fetch("/smith/api/content");
     if (!response.ok) return;
     const data = await response.json();
+    const known = new Set(["Jackson Ryder", "Okolibooks Creative", "Mirah Tracy"]);
     if (work && data.portfolios && data.portfolios.length) {
-      work.innerHTML = data.portfolios
-        .map((item, index) => {
-          const colors = ["jackson-card", "okolibooks-card", "mirah-card"];
-          const tags = String(item.tags || "")
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter(Boolean)
-            .map((tag) => `<span>${tag}</span>`)
-            .join("");
-          const proof = {
-            "Jackson Ryder": "Mobile-first • Music player + admin • Contact form",
-            "Okolibooks Creative": "Mobile-first • Admin for work • Enquiry form",
-            "Mirah Tracy": "Mobile layout • Enquiry form • Service pages",
-          };
-          const resultLine = proof[item.name] || item.result || "";
-          const result = resultLine ? `<p class="result">${escapeHtml(resultLine)}</p>` : "";
-          const urlFix = { "Mirah Tracy": "https://sites-box.onrender.com/mirah" };
-          const liveUrl = urlFix[item.name] || item.url || "#";
-          let host = "";
-          try {
-            const u = new URL(liveUrl);
-            host = u.host + (u.pathname !== "/" ? u.pathname.replace(/\/$/, "") : "");
-          } catch (_) {}
-          const urlLine = host ? `<p class="project-url">${escapeHtml(host)}</p>` : "";
-          return `<article class="project"><a class="project-link" href="${escapeHtml(liveUrl)}" target="_blank" rel="noreferrer"><div class="live-card ${colors[index % colors.length]}">${item.image ? `<img class="portfolio-thumb" src="${item.image}" alt="">` : item.quote ? `<blockquote class="portfolio-quote">“${escapeHtml(item.quote)}”</blockquote>` : ""}<span>${escapeHtml(item.name)}</span><em>OPEN SITE ↗</em></div></a><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p>${result}${urlLine}<div class="tags">${tags}</div></article>`;
-        })
-        .join("");
+      const extra = data.portfolios.filter((item) => !known.has(item.name));
+      extra.forEach((item) => {
+        const liveUrl = item.url || "";
+        const dead = /okolibookscreative\.onrender\.com/i.test(liveUrl);
+        const link = liveUrl && !dead
+          ? `<a class="button button-light" href="${escapeHtml(liveUrl)}" target="_blank" rel="noreferrer">VIEW LIVE SITE <span>↗</span></a>`
+          : "";
+        const article = document.createElement("article");
+        article.className = "case";
+        article.dataset.cat = "business";
+        article.innerHTML = `<div class="shot"><div class="browser"><i></i><i></i><i></i><span>${escapeHtml(item.name)}</span></div><div class="shot-body"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description || "")}</p></div></div><div class="case-copy"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description || "")}</p>${item.result ? `<p>${escapeHtml(item.result)}</p>` : ""}${link}</div>`;
+        work.appendChild(article);
+      });
     }
     const testiWrap = document.getElementById("testimonials");
-    const navTesti = document.getElementById("navTesti");
     const items = (data.testimonials || []).filter((item) => String(item.quote || "").trim() || item.image);
     if (testimonials && items.length) {
       if (testiWrap) {
         testiWrap.hidden = false;
         testiWrap.removeAttribute("hidden");
         testiWrap.style.display = "block";
-      }
-      if (navTesti) {
-        navTesti.hidden = false;
-        navTesti.removeAttribute("hidden");
       }
       testimonials.innerHTML = items
         .map((item) => {
@@ -113,11 +94,9 @@ async function loadManagedContent() {
     }
   } catch (_) {}
 }
-function escapeHtml(value) {
-  return String(value || "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
-}
 loadManagedContent();
-const links = [...document.querySelectorAll('nav a[href^="#"]')];
+
+const links = [...document.querySelectorAll('#siteNav a[href^="#"]')];
 const sections = [...document.querySelectorAll("main section[id]")];
 const observer = new IntersectionObserver(
   (entries) =>

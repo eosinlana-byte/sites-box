@@ -1,9 +1,9 @@
 const $ = (s) => document.querySelector(s);
-const toast = (text) => {
+const toast = (text, ms = 2500) => {
   const t = $("#toast");
   t.textContent = text;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 1600);
+  setTimeout(() => t.classList.remove("show"), ms);
 };
 const esc = (v) =>
   String(v || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -172,7 +172,7 @@ $("#testimonialForm").onsubmit = async (e) => {
     render();
     await load();
   } catch (err) {
-    toast(err.message);
+    toast(err.message, 6000);
   }
 };
 

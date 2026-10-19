@@ -90,17 +90,26 @@ async function loadManagedContent() {
     }
     const testiWrap = document.getElementById("testimonials");
     const navTesti = document.getElementById("navTesti");
-    if (testimonials && data.testimonials && data.testimonials.length) {
-      if (testiWrap) testiWrap.hidden = false;
-      if (navTesti) navTesti.hidden = false;
-      testimonials.innerHTML = data.testimonials
-        .map(
-          (item) =>
-            `<figure class="testimonial-image-card">${item.image ? `<img src="${item.image}" alt="${escapeHtml(item.client)} testimonial">` : `<blockquote><p>${escapeHtml(item.quote || "")}</p><cite>${escapeHtml(item.client)}${item.role ? `, ${escapeHtml(item.role)}` : ""}</cite></blockquote>`}<figcaption>${escapeHtml(item.client)}${item.role ? `, ${escapeHtml(item.role)}` : ""}</figcaption></figure>`
-        )
+    const items = (data.testimonials || []).filter((item) => String(item.quote || "").trim() || item.image);
+    if (testimonials && items.length) {
+      if (testiWrap) {
+        testiWrap.hidden = false;
+        testiWrap.removeAttribute("hidden");
+        testiWrap.style.display = "block";
+      }
+      if (navTesti) {
+        navTesti.hidden = false;
+        navTesti.removeAttribute("hidden");
+      }
+      testimonials.innerHTML = items
+        .map((item) => {
+          const who = `${escapeHtml(item.client || "")}${item.role ? `, ${escapeHtml(item.role)}` : ""}`;
+          const body = item.image
+            ? `<img src="${item.image}" alt="${escapeHtml(item.client || "")} testimonial">`
+            : `<blockquote><p>${escapeHtml(item.quote || "")}</p><cite>${who}</cite></blockquote>`;
+          return `<figure class="testimonial-image-card">${body}<figcaption>${who}</figcaption></figure>`;
+        })
         .join("");
-    } else if (testiWrap) {
-      testiWrap.hidden = true;
     }
   } catch (_) {}
 }

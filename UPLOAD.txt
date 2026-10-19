@@ -1,26 +1,17 @@
-That red toast is a database error. Smith was saving into a shared
-"testimonials" table that belongs to Mira. That table has "name",
-not "client", so the save bounced and vanished on refresh.
+The quote already saved. The public page was hiding the block until JS ran,
+so a cached page looked empty.
 
-These 3 files give Smith its own table: sm_testimonials.
+These 3 files put TESTIMONIALS under Work and keep it visible.
 
 1. Open https://github.com/eosinlana-byte/sites-box/upload/main
-2. Drag these 3 files onto that page (replace if GitHub asks):
-     sm-server.js
-     sm-admin.html
-     sm-admin.js
-3. Commit / save.
-4. Wait for Render. Open https://sites-box.onrender.com/api/health
-   until you see {"ok":true,"box":"morgan-mirah-smith"}
-5. Close every admin tab (Morgan and Mirah too).
-6. Open https://sites-box.onrender.com/smith/admin
-7. Press Ctrl and F5 together (hard refresh).
-8. Click Testimonials, Add testimonial.
-   Fill Quote and Client. Photo is optional and must be a small jpg.
-9. Save. Wait for "Added". Do not close the tab yet.
-10. Refresh the admin page. The row should still be there.
-11. Open https://sites-box.onrender.com/smith and Ctrl+F5.
-    TESTIMONIALS in the nav only shows after a real quote is saved.
+2. Drag these 3 files (replace if asked):
+     sm-index.html
+     sm-main.js
+     sm-style.css
+3. Commit.
+4. Wait for Render health: https://sites-box.onrender.com/api/health
+5. Open this exact link:
+     https://sites-box.onrender.com/smith#testimonials
+6. Press Ctrl and F5.
 
-Do not unsuspend morgan-benjamin, smithmichael, or mirah-tracy.
-Jackson stays on jackson-ryder.onrender.com.
+You should see Ryder Jackson under TESTIMONIALS, right under Work.

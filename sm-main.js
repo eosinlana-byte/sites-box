@@ -13,17 +13,6 @@ if (navToggle && header) {
   });
 }
 
-document.querySelectorAll(".work-filters .chip").forEach((chip) => {
-  chip.onclick = () => {
-    document.querySelectorAll(".work-filters .chip").forEach((c) => c.classList.remove("on"));
-    chip.classList.add("on");
-    const f = chip.dataset.filter;
-    document.querySelectorAll(".case-list .case").forEach((card) => {
-      card.classList.toggle("hidden-cat", f !== "all" && card.dataset.cat !== f);
-    });
-  };
-});
-
 const form = document.querySelector("#contact-form");
 const status = document.querySelector("#form-status");
 if (form) {
@@ -53,44 +42,26 @@ function escapeHtml(value) {
 
 async function loadManagedContent() {
   const work = document.querySelector(".real-work");
-  const testimonials = document.querySelector(".testimonial-grid");
   try {
     const response = await fetch("/smith/api/content");
     if (!response.ok) return;
     const data = await response.json();
     const known = new Set(["Jackson Ryder", "Okolibooks Creative", "Mirah Tracy"]);
     if (work && data.portfolios && data.portfolios.length) {
-      const extra = data.portfolios.filter((item) => !known.has(item.name));
-      extra.forEach((item) => {
-        const liveUrl = item.url || "";
-        const dead = /okolibookscreative\.onrender\.com/i.test(liveUrl);
-        const link = liveUrl && !dead
-          ? `<a class="button button-light" href="${escapeHtml(liveUrl)}" target="_blank" rel="noreferrer">VIEW LIVE SITE <span>↗</span></a>`
-          : "";
-        const article = document.createElement("article");
-        article.className = "case";
-        article.dataset.cat = "business";
-        article.innerHTML = `<div class="shot"><div class="browser"><i></i><i></i><i></i><span>${escapeHtml(item.name)}</span></div><div class="shot-body"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description || "")}</p></div></div><div class="case-copy"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description || "")}</p>${item.result ? `<p>${escapeHtml(item.result)}</p>` : ""}${link}</div>`;
-        work.appendChild(article);
-      });
-    }
-    const testiWrap = document.getElementById("testimonials");
-    const items = (data.testimonials || []).filter((item) => String(item.quote || "").trim() || item.image);
-    if (testimonials && items.length) {
-      if (testiWrap) {
-        testiWrap.hidden = false;
-        testiWrap.removeAttribute("hidden");
-        testiWrap.style.display = "block";
-      }
-      testimonials.innerHTML = items
-        .map((item) => {
-          const who = `${escapeHtml(item.client || "")}${item.role ? `, ${escapeHtml(item.role)}` : ""}`;
-          const body = item.image
-            ? `<img src="${item.image}" alt="${escapeHtml(item.client || "")} testimonial">`
-            : `<blockquote><p>${escapeHtml(item.quote || "")}</p><cite>${who}</cite></blockquote>`;
-          return `<figure class="testimonial-image-card">${body}<figcaption>${who}</figcaption></figure>`;
-        })
-        .join("");
+      data.portfolios
+        .filter((item) => !known.has(item.name))
+        .forEach((item) => {
+          const liveUrl = item.url || "";
+          const dead = /okolibookscreative\.onrender\.com/i.test(liveUrl);
+          const link =
+            liveUrl && !dead
+              ? `<a class="button" href="${escapeHtml(liveUrl)}" target="_blank" rel="noreferrer">VIEW LIVE SITE <span>↗</span></a>`
+              : "";
+          const article = document.createElement("article");
+          article.className = "case";
+          article.innerHTML = `<div class="shot"><div class="browser"><i></i><i></i><i></i><span>${escapeHtml(item.name)}</span></div><div class="shot-body"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description || "")}</p></div></div><div class="case-copy"><h3>${escapeHtml(item.name)}</h3><p class="role">Design + Development</p><p>${escapeHtml(item.description || "")}</p>${link}</div>`;
+          work.appendChild(article);
+        });
     }
   } catch (_) {}
 }
@@ -101,7 +72,9 @@ const sections = [...document.querySelectorAll("main section[id]")];
 const observer = new IntersectionObserver(
   (entries) =>
     entries.forEach((entry) => {
-      if (entry.isIntersecting) links.forEach((link) => link.classList.toggle("active", link.getAttribute("href") === `#${entry.target.id}`));
+      if (entry.isIntersecting) {
+        links.forEach((link) => link.classList.toggle("active", link.getAttribute("href") === `#${entry.target.id}`));
+      }
     }),
   { rootMargin: "-35% 0px -55% 0px" }
 );

@@ -33,7 +33,7 @@ function render() {
     ? content.testimonials
         .map(
           (x) =>
-            `<tr><td>${esc(x.client)}</td><td>${esc(x.role)}</td><td class="row-actions"><button class="btn ghost" data-te="${x.id}">Edit</button><button class="btn danger" data-td="${x.id}">Delete</button></td></tr>`
+            `<tr><td>${esc(x.quote)}</td><td>${esc(x.client)}</td><td>${esc(x.role)}</td><td class="row-actions"><button class="btn ghost" data-te="${x.id}">Edit</button><button class="btn danger" data-td="${x.id}">Delete</button></td></tr>`
         )
         .join("")
     : '<tr><td colspan="4" class="empty">No testimonials.</td></tr>';
@@ -85,6 +85,7 @@ function openPortfolio(x) {
 }
 function openTestimonial(x) {
   $("#testimonialId").value = x?.id || "";
+  $("#testimonialQuote").value = x?.quote || "";
   $("#testimonialClient").value = x?.client || "";
   $("#testimonialRole").value = x?.role || "";
   $("#testimonialImage").value = "";
@@ -142,29 +143,36 @@ $("#portfolioForm").onsubmit = async (e) => {
 $("#testimonialForm").onsubmit = async (e) => {
   e.preventDefault();
   const id = $("#testimonialId").value;
+  const file = $("#testimonialImage").files[0];
+  if (file && file.size > 400000) {
+    toast("Photo too large. Use a smaller jpg.");
+    return;
+  }
   const body = {
+    quote: $("#testimonialQuote").value,
     client: $("#testimonialClient").value,
     role: $("#testimonialRole").value,
-    image: await fileData($("#testimonialImage").files[0]),
+    image: await fileData(file),
   };
-  closeModals();
-  toast(id ? "Edited" : "Added");
-  const temp = { id: id || "tmp-" + Date.now(), ...body };
-  if (id) content.testimonials = content.testimonials.map((x) => (String(x.id) === String(id) ? { ...x, ...temp } : x));
-  else content.testimonials = [...content.testimonials, temp];
-  render();
+  if (!body.client.trim() || !body.quote.trim()) {
+    toast("Need a quote and a name");
+    return;
+  }
   try {
     const saved = await api(id ? "/api/admin/testimonial/" + id : "/api/admin/testimonial", {
       method: id ? "PUT" : "POST",
       body: JSON.stringify(body),
     });
+    closeModals();
+    toast(id ? "Edited" : "Added");
     if (saved && saved.id) {
-      content.testimonials = content.testimonials.map((x) => (String(x.id) === String(temp.id) ? saved : x));
-      render();
+      if (id) content.testimonials = content.testimonials.map((x) => (String(x.id) === String(id) ? saved : x));
+      else content.testimonials = [saved, ...content.testimonials];
     }
+    render();
+    await load();
   } catch (err) {
     toast(err.message);
-    load().catch(() => {});
   }
 };
 

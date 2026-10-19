@@ -42,6 +42,8 @@ function escapeHtml(value) {
 
 async function loadManagedContent() {
   const work = document.querySelector(".real-work");
+  const quotes = document.querySelector(".testimonial-grid");
+  const testiWrap = document.getElementById("testimonials");
   try {
     const response = await fetch("/smith/api/content");
     if (!response.ok) return;
@@ -62,6 +64,22 @@ async function loadManagedContent() {
           article.innerHTML = `<div class="shot"><div class="browser"><i></i><i></i><i></i><span>${escapeHtml(item.name)}</span></div><div class="shot-body"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description || "")}</p></div></div><div class="case-copy"><h3>${escapeHtml(item.name)}</h3><p class="role">Design + Development</p><p>${escapeHtml(item.description || "")}</p>${link}</div>`;
           work.appendChild(article);
         });
+    }
+    const items = (data.testimonials || []).filter((item) => String(item.quote || "").trim() || item.image);
+    if (quotes && items.length) {
+      if (testiWrap) {
+        testiWrap.hidden = false;
+        testiWrap.removeAttribute("hidden");
+        testiWrap.style.display = "block";
+      }
+      quotes.innerHTML = items
+        .map((item) => {
+          const who = escapeHtml(item.client || "");
+          const img = item.image ? `<img src="${item.image}" alt="">` : "";
+          const q = escapeHtml(item.quote || "");
+          return `<figure class="quote-card">${img}<blockquote><p>${q}</p><cite>${who}<span>Website Design &amp; Development</span></cite></blockquote></figure>`;
+        })
+        .join("");
     }
   } catch (_) {}
 }

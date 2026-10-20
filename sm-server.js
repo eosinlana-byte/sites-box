@@ -156,7 +156,7 @@ app.post('/api/admin/testimonial',async(req,res)=>{
   const client=String(req.body.client||req.body.name||'').trim();
   const role=String(req.body.role||'').trim();
   const image=req.body.image||'';
-  if(!client||!quote) return res.status(400).json({error:'Need a quote and a name'});
+  if(!image&&!quote) return res.status(400).json({error:'Add a screenshot'});
   const sql='INSERT INTO sm_testimonials(quote,client,role,image) VALUES($1,$2,$3,$4) RETURNING id,quote,client,role,created_at';
   const params=[quote,client,role,image];
   try {

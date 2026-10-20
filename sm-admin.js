@@ -33,7 +33,7 @@ function render() {
     ? content.testimonials
         .map(
           (x) =>
-            `<tr><td>${esc(x.quote)}</td><td>${esc(x.client)}</td><td>${esc(x.role)}</td><td class="row-actions"><button class="btn ghost" data-te="${x.id}">Edit</button><button class="btn danger" data-td="${x.id}">Delete</button></td></tr>`
+            `<tr><td>${x.image ? `<img class="admin-thumb" src="${x.image}" alt="">` : "No image"}</td><td>${esc(x.client)}</td><td>${esc(x.role)}</td><td class="row-actions"><button class="btn ghost" data-te="${x.id}">Edit</button><button class="btn danger" data-td="${x.id}">Delete</button></td></tr>`
         )
         .join("")
     : '<tr><td colspan="4" class="empty">No testimonials.</td></tr>';
@@ -154,8 +154,8 @@ $("#testimonialForm").onsubmit = async (e) => {
     role: $("#testimonialRole").value,
     image: await fileData(file),
   };
-  if (!body.client.trim() || !body.quote.trim()) {
-    toast("Need a quote and a name");
+  if (!id && !body.image) {
+    toast("Add a screenshot");
     return;
   }
   try {

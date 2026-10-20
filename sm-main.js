@@ -65,11 +65,7 @@ async function loadManagedContent() {
           work.appendChild(article);
         });
     }
-    const items = (data.testimonials || []).filter((item) => {
-      const q = String(item.quote || "").trim();
-      if (/fddxtyssutydty/i.test(q)) return false;
-      return q || item.image;
-    });
+    const items = (data.testimonials || []).filter((item) => String(item.image || "").trim());
     if (quotes && items.length) {
       if (testiWrap) {
         testiWrap.hidden = false;
@@ -77,13 +73,10 @@ async function loadManagedContent() {
         testiWrap.style.display = "block";
       }
       quotes.innerHTML = items
-        .map((item) => {
-          const who = escapeHtml(item.client || "");
-          const img = item.image ? `<img src="${item.image}" alt="">` : "";
-          const q = escapeHtml(item.quote || "");
-          return `<figure class="quote-card">${img}<blockquote><p>${q}</p><cite>${who}<span>Website Design &amp; Development</span></cite></blockquote></figure>`;
-        })
+        .map((item) => `<figure class="shot-card"><img src="${item.image}" alt=""></figure>`)
         .join("");
+    } else if (testiWrap) {
+      testiWrap.hidden = true;
     }
   } catch (_) {}
 }

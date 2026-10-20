@@ -48,22 +48,55 @@ async function loadManagedContent() {
     const response = await fetch("/smith/api/content");
     if (!response.ok) return;
     const data = await response.json();
-    const known = new Set(["Jackson Ryder", "Okolibooks Creative", "Mirah Tracy"]);
-    if (work && data.portfolios && data.portfolios.length) {
-      data.portfolios
-        .filter((item) => !known.has(item.name))
-        .forEach((item) => {
-          const liveUrl = item.url || "";
-          const dead = /okolibookscreative\.onrender\.com/i.test(liveUrl);
-          const link =
-            liveUrl && !dead
-              ? `<a class="button" href="${escapeHtml(liveUrl)}" target="_blank" rel="noreferrer">VIEW LIVE SITE <span>↗</span></a>`
-              : "";
-          const article = document.createElement("article");
-          article.className = "case";
-          article.innerHTML = `<div class="shot"><div class="browser"><i></i><i></i><i></i><span>${escapeHtml(item.name)}</span></div><div class="shot-body"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description || "")}</p></div></div><div class="case-copy"><h3>${escapeHtml(item.name)}</h3><p class="role">Design + Development</p><p>${escapeHtml(item.description || "")}</p>${link}</div>`;
-          work.appendChild(article);
-        });
+    const extras = {
+      "Jackson Ryder": {
+        type: "Artist website",
+        blurb: "A personal website for a singer and songwriter, featuring music, portfolio, services, contact, and admin functionality.",
+        feats: "Music Player • Portfolio • Contact • Admin • Responsive Design",
+        photo: "/sm-work-jackson.jpg",
+        tone: "shot-a",
+      },
+      "Mirah Tracy": {
+        type: "Author service website",
+        blurb: "A service website for an author-focused business, with service pages and an enquiry form.",
+        feats: "Service Pages • Enquiry Form • Admin • Responsive Design",
+        photo: "/sm-work-mirah.jpg",
+        tone: "shot-c",
+      },
+    };
+    if (work && data.portfolios) {
+      work.innerHTML = data.portfolios
+        .map((item) => {
+          const extra = extras[item.name] || {};
+          let liveUrl = item.url || "";
+          if (/okolibookscreative\.onrender\.com/i.test(liveUrl) || /mirah-tracy\.onrender\.com/i.test(liveUrl)) liveUrl = "";
+          if (item.name === "Mirah Tracy") liveUrl = "https://sites-box.onrender.com/mirah";
+          const host = (() => {
+            try {
+              const u = new URL(liveUrl);
+              return u.host + (u.pathname !== "/" ? u.pathname.replace(/\/$/, "") : "");
+            } catch (_) {
+              return item.name;
+            }
+          })();
+          const type = extra.type || "Website";
+          const blurb = extra.blurb || item.description || "";
+          const feats = extra.feats ? `<p class="feats">${escapeHtml(extra.feats)}</p>` : "";
+          const photo = item.image || extra.photo || "";
+          const tone = extra.tone || "shot-a";
+          const visual = photo
+            ? `<img class="shot-photo" src="${escapeHtml(photo)}" alt="${escapeHtml(item.name)}">`
+            : `<div class="shot-body ${tone}"><p class="shot-kicker">${escapeHtml(type)}</p><h3>${escapeHtml(item.name)}</h3><div class="shot-rows"><b></b><b></b><b></b></div></div>`;
+          const shotInner = `<div class="browser"><i></i><i></i><i></i><span>${escapeHtml(host)}</span></div>${visual}`;
+          const shot = liveUrl
+            ? `<a class="shot" href="${escapeHtml(liveUrl)}" target="_blank" rel="noreferrer">${shotInner}</a>`
+            : `<div class="shot">${shotInner}</div>`;
+          const btn = liveUrl
+            ? `<a class="button" href="${escapeHtml(liveUrl)}" target="_blank" rel="noreferrer">VIEW LIVE SITE <span>↗</span></a>`
+            : "";
+          return `<article class="case">${shot}<div class="case-copy"><p class="eyebrow">${escapeHtml(item.name)}</p><h3>${escapeHtml(type)}</h3><p class="role">Design + Development</p><p>${escapeHtml(blurb)}</p>${feats}${btn}</div></article>`;
+        })
+        .join("");
     }
     const items = (data.testimonials || []).filter((item) => String(item.image || "").trim());
     if (quotes && items.length) {

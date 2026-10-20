@@ -51,6 +51,7 @@ nav a:hover,nav a.active{color:var(--ink)}
 .browser{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line);background:#fff}
 .browser i{width:8px;height:8px;border-radius:50%;background:var(--line2)}
 .browser span{margin-left:8px;color:var(--faint);font-size:.68rem}
+.shot-photo{display:block;width:100%;height:320px;object-fit:cover;background:#111}
 .shot-body{padding:36px 28px;min-height:240px;color:#F5F2EA}
 .shot-kicker{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;margin:0 0 8px;opacity:.8}
 .shot-body h3{margin:0;font-size:clamp(1.5rem,3vw,2.4rem);letter-spacing:-.04em}

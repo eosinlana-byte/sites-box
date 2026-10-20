@@ -15,7 +15,10 @@
           <strong>Smith</strong>
           <span>Project assistant</span>
         </div>
-        <button type="button" id="gptClose" aria-label="Close">✕</button>
+        <div class="gpt-head-actions">
+          <button type="button" id="gptFormSwitch">Use the form</button>
+          <button type="button" id="gptClose" aria-label="Close">✕</button>
+        </div>
       </header>
       <div class="gpt-thread" id="gptThread"></div>
       <div class="gpt-chips" id="gptChips"></div>
@@ -144,16 +147,28 @@
     }
   }
 
-  document.getElementById("gptOpen").onclick = () => {
+  function openAssist(e) {
+    if (e) e.preventDefault();
     panel.hidden = false;
     document.getElementById("gptOpen").hidden = true;
     if (!thread.childElementCount) promptStep();
     input.focus();
-  };
-  document.getElementById("gptClose").onclick = () => {
+  }
+  function closeAssist() {
     panel.hidden = true;
     document.getElementById("gptOpen").hidden = false;
+  }
+  document.getElementById("gptOpen").onclick = openAssist;
+  document.getElementById("gptClose").onclick = closeAssist;
+  document.getElementById("gptFormSwitch").onclick = () => {
+    closeAssist();
+    const box = document.getElementById("contact");
+    if (box) box.scrollIntoView({ behavior: "smooth" });
   };
+  document.querySelectorAll("[data-open-assist]").forEach((el) => {
+    el.addEventListener("click", openAssist);
+  });
+  window.openSmithAssist = openAssist;
   form.onsubmit = (e) => {
     e.preventDefault();
     const v = input.value;

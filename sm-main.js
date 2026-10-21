@@ -18,6 +18,7 @@ const status = document.querySelector("#form-status");
 if (form) {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (data.hp_trap) return;
     status.textContent = "Saving enquiry...";
     const data = Object.fromEntries(new FormData(form));
     try {
@@ -75,7 +76,7 @@ const extras = {
     tone: "shot-d",
     live: "",
     concept: true,
-    cta: "View project ↗",
+    cta: "View concept ↗",
   },
 };
 
@@ -95,7 +96,7 @@ function renderCase(item) {
   if (item.name === "Mirah Tracy") liveUrl = "https://sites-box.onrender.com/mirah";
   const photo = item.image || extra.photo || "";
   const visual = photo
-    ? `<img class="shot-photo" src="${escapeHtml(photo)}" alt="${escapeHtml(item.name)}">`
+            ? `<img class="shot-photo" src="${escapeHtml(photo)}" alt="${escapeHtml(item.name)} website" loading="lazy">`
     : `<div class="shot-body ${extra.tone || "shot-a"}"><p class="shot-kicker">${escapeHtml(extra.type)}</p><h3>${escapeHtml(item.name)}</h3></div>`;
   const shotInner = `<div class="browser"><i></i><i></i><i></i><span>${escapeHtml(hostOf(liveUrl, item.name))}</span></div>${visual}`;
   const shot = liveUrl

@@ -6,7 +6,8 @@
   --line:#292929;
   --accent:#C8A96B;
 }
-*{box-sizing:border-box}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.hp{position:absolute;left:-9999px;height:0;width:0;opacity:0}
 html{scroll-behavior:smooth;scroll-padding-top:88px;overflow-x:hidden}
 body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;font-size:16px;line-height:1.65;max-width:100%;overflow-x:hidden}
 h1,h2,h3,.brand,.exp-num,.price{font-family:"Space Grotesk",Inter,system-ui,sans-serif}

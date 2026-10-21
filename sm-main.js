@@ -18,9 +18,9 @@ const status = document.querySelector("#form-status");
 if (form) {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    const data = Object.fromEntries(new FormData(form));
     if (data.hp_trap) return;
     status.textContent = "Saving enquiry...";
-    const data = Object.fromEntries(new FormData(form));
     try {
       const response = await fetch("/smith/api/enquiries", {
         method: "POST",

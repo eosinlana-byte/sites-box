@@ -9,6 +9,7 @@
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:88px;overflow-x:hidden}
 body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;font-size:16px;line-height:1.65;max-width:100%;overflow-x:hidden}
+h1,h2,h3,.brand,.exp-num,.price{font-family:"Space Grotesk",Inter,system-ui,sans-serif}
 a{color:inherit}
 
 .site-header{min-height:72px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 5vw;border-bottom:1px solid var(--line);position:fixed;top:0;left:0;right:0;z-index:20;background:rgba(13,13,13,.94)}
@@ -33,15 +34,21 @@ nav a:hover,nav a.active{color:var(--text)}
 .hero-line{color:var(--muted);font-size:1.12rem;margin:22px 0 28px;max-width:42ch}
 .hero-kicker{margin-top:28px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;font-size:.72rem}
 
-.section{padding:92px 6vw;max-width:1180px;margin:0 auto}
+.hero .eyebrow.sub{margin-top:-6px;color:var(--muted);font-weight:600}
+.section{padding:100px 6vw;max-width:1180px;margin:0 auto}
 .section-head{margin-bottom:40px}
 .section h2{font-size:clamp(1.7rem,3vw,2.5rem);line-height:1.15;letter-spacing:-.04em;margin:8px 0 0;max-width:18ch;font-weight:600}
 
 .case-list{display:grid;gap:72px}
 .case{display:grid;grid-template-columns:1.25fr .75fr;gap:36px;align-items:center}
 .case:nth-child(even){grid-template-columns:.75fr 1.25fr}
-.case:nth-child(even) .shot{order:2}
-.shot{display:block;text-decoration:none;border:1px solid var(--line);background:#111;overflow:hidden}
+.case:nth-child(even) .shot-wrap{order:2}
+.work-filters{display:flex;flex-wrap:wrap;gap:8px;margin:-12px 0 36px}
+.chip{background:transparent;color:var(--muted);border:1px solid var(--line);padding:8px 14px;font:700 .68rem Inter,Arial;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.chip.on,.chip:hover{border-color:var(--accent);color:var(--text)}
+.case.hidden-cat{display:none}
+.shot{display:block;text-decoration:none;border:1px solid var(--line);background:#111;overflow:hidden;transition:transform .25s ease}
+.shot:hover{transform:translateY(-4px) scale(1.02)}
 .browser{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line);background:#101010}
 .browser i{width:8px;height:8px;border-radius:50%;background:#3a3a3a}
 .browser span{margin-left:8px;color:#7a776f;font-size:.68rem}
@@ -68,7 +75,7 @@ nav a:hover,nav a.active{color:var(--text)}
 .kicker{margin-top:28px;color:var(--muted);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase}
 
 .exp-section{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.exp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.exp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
 .exp-num{font-size:clamp(2.2rem,4vw,3.2rem);margin:0;letter-spacing:-.04em}
 .exp-label{color:var(--accent);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin:10px 0 4px}
 .exp-grid p{color:var(--muted);margin:0}
@@ -96,7 +103,8 @@ nav a:hover,nav a.active{color:var(--text)}
 .price-card.featured{border-color:var(--accent)}
 .price-card h3{margin:0;font-size:1.15rem}
 .price{font-size:1.7rem;color:var(--accent);margin:0}
-.price-card .button{margin-top:auto;align-self:flex-start}
+.price-card ul{margin:8px 0 16px;padding-left:18px;color:var(--muted);font-size:.9rem}
+.price-note{color:var(--muted);font-size:.88rem;margin-top:20px;max-width:52ch}
 
 .contact-section{display:grid;grid-template-columns:1fr 1fr;gap:56px}
 .contact-copy h2{margin-bottom:14px}
@@ -161,7 +169,7 @@ footer strong{display:block;letter-spacing:.12em;color:var(--text)}
   .hero{padding-top:120px;min-height:auto}
 }
 @media(max-width:620px){
-  .section{padding:64px 6vw}
+  .section{padding:60px 6vw}
   .gpt-fab{width:52px;height:52px;padding:0;justify-content:center}
   .gpt-fab{font-size:0}
   .gpt-fab-dot{font-size:16px}

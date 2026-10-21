@@ -43,9 +43,8 @@ function escapeHtml(value) {
 const extras = {
   "Jackson Ryder": {
     type: "Artist website",
-    cat: "artist",
     blurb: "A modern website for a singer and songwriter, bringing together music, artist information, portfolio content, and contact details.",
-    feats: "Design • Development • Music • Responsive",
+    feats: "Music Player • Portfolio • Contact • Responsive Design",
     photo: "/sm-work-jackson.jpg",
     tone: "shot-a",
     live: "https://jackson-ryder.onrender.com/",
@@ -53,9 +52,8 @@ const extras = {
   },
   "Okolibooks Creative": {
     type: "Publishing & creative services website",
-    cat: "business",
     blurb: "A clean website for a publishing and creative services brand, designed to present its services, work, and enquiry options clearly.",
-    feats: "Design • Development • Services • Admin",
+    feats: "Services • Portfolio • Contact • Responsive Design",
     tone: "shot-b",
     live: "",
     note: "The old live host is suspended. I can show the build on a call.",
@@ -63,9 +61,8 @@ const extras = {
   },
   "Mirah Tracy": {
     type: "Author services website",
-    cat: "author",
     blurb: "A professional website for an author-focused service brand, with clear service pages, project information, and an easy enquiry experience.",
-    feats: "Design • Development • Service pages",
+    feats: "Service Pages • Portfolio • Contact • Responsive Design",
     photo: "/sm-work-mirah.jpg",
     tone: "shot-c",
     live: "https://sites-box.onrender.com/mirah",
@@ -73,13 +70,12 @@ const extras = {
   },
   BrightSpace: {
     type: "Interior design website concept",
-    cat: "creative",
     blurb: "A modern website concept for an interior design brand, created to showcase services and projects through strong imagery and a clean page structure.",
-    feats: "Web design • Responsive layout • Portfolio",
+    feats: "Portfolio • Services • Responsive Layout",
     tone: "shot-d",
     live: "",
     concept: true,
-    cta: "View concept",
+    cta: "View project ↗",
   },
 };
 
@@ -93,7 +89,7 @@ function hostOf(url, fallback) {
 }
 
 function renderCase(item) {
-  const extra = extras[item.name] || { cat: "business", type: "Website", blurb: item.description || "", feats: "", tone: "shot-a", live: item.url || "", cta: "View project ↗" };
+  const extra = extras[item.name] || { type: "Website", blurb: item.description || "", feats: "", tone: "shot-a", live: item.url || "", cta: "View project ↗" };
   let liveUrl = extra.live != null ? extra.live : item.url || "";
   if (/okolibookscreative\.onrender\.com/i.test(liveUrl)) liveUrl = "";
   if (item.name === "Mirah Tracy") liveUrl = "https://sites-box.onrender.com/mirah";
@@ -108,7 +104,7 @@ function renderCase(item) {
   const btn = liveUrl ? `<a class="button" href="${escapeHtml(liveUrl)}" target="_blank" rel="noreferrer">${escapeHtml(extra.cta || "View project ↗")}</a>` : "";
   const concept = extra.concept ? `<p class="concept">Concept</p>` : "";
   const note = extra.note ? `<p class="offline-note">${escapeHtml(extra.note)}</p>` : "";
-  return `<article class="case" data-cat="${extra.cat}"><div class="shot-wrap">${shot}</div><div class="case-copy">${concept}<p class="eyebrow">${escapeHtml(item.name)}</p><h3>${escapeHtml(extra.type)}</h3><p class="role">Design + Development</p><p>${escapeHtml(extra.blurb)}</p><p class="feats">${escapeHtml(extra.feats || "")}</p>${note}${btn}</div></article>`;
+  return `<article class="case"><div class="shot-wrap">${shot}</div><div class="case-copy">${concept}<p class="eyebrow">${escapeHtml(item.name)}</p><h3>${escapeHtml(extra.type)}</h3><p class="role">Design + Development</p><p>${escapeHtml(extra.blurb)}</p><p class="feats">${escapeHtml(extra.feats || "")}</p>${note}${btn}</div></article>`;
 }
 
 async function loadManagedContent() {
@@ -145,17 +141,6 @@ async function loadManagedContent() {
   } catch (_) {}
 }
 loadManagedContent();
-
-document.querySelectorAll(".work-filters .chip").forEach((chip) => {
-  chip.onclick = () => {
-    document.querySelectorAll(".work-filters .chip").forEach((c) => c.classList.remove("on"));
-    chip.classList.add("on");
-    const f = chip.dataset.filter;
-    document.querySelectorAll(".case-list .case").forEach((card) => {
-      card.classList.toggle("hidden-cat", f !== "all" && card.dataset.cat !== f);
-    });
-  };
-});
 
 const links = [...document.querySelectorAll('#siteNav a[href^="#"]')];
 const sections = [...document.querySelectorAll("main section[id]")];

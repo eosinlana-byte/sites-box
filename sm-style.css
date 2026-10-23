@@ -62,7 +62,7 @@ nav a:hover,nav a.active{color:var(--text)}
 .shot-c{background:linear-gradient(165deg,#121212,#161814)}
 .shot-d{background:linear-gradient(165deg,#141414,#1a1814)}
 .case-copy h3{margin:0 0 8px;font-size:1.5rem}
-.case-copy p{color:var(--muted);margin:0 0 12px}
+.case-copy p{color:var(--muted);margin:0 0 12px;overflow-wrap:anywhere}
 .role{color:var(--text)!important}
 .feats{color:var(--text)!important;font-size:.88rem}
 .concept{display:inline-block;border:1px solid var(--accent);color:var(--accent);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;padding:4px 8px;margin-bottom:10px}

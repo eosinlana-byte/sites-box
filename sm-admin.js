@@ -20,15 +20,40 @@ async function api(url, options = {}) {
 }
 let content = { portfolios: [], testimonials: [], enquiries: [] };
 
+function tagChips(tags) {
+  return String(tags || "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .slice(0, 10)
+    .map((t) => `<span class="tag">${esc(t)}</span>`)
+    .join("");
+}
+
+function workCard(x) {
+  const shot = x.image
+    ? `<img class="work-shot" src="${esc(x.image)}" alt="">`
+    : `<div class="work-shot blank">No image</div>`;
+  const url = String(x.url || "").trim();
+  const link = url
+    ? `<a class="work-url" href="${esc(url)}" target="_blank" rel="noreferrer">${esc(url.replace(/^https?:\/\//, ""))}</a>`
+    : `<span class="work-url off">No live URL</span>`;
+  return `<article class="work-card">${shot}<div class="work-body">
+    <h3>${esc(x.name)}</h3>
+    ${link}
+    <p class="work-desc">${esc(x.description)}</p>
+    <div class="work-tags">${tagChips(x.tags)}</div>
+    <div class="work-actions">
+      <button class="btn ghost" data-pe="${x.id}" type="button">Edit</button>
+      <button class="btn danger" data-pd="${x.id}" type="button">Delete</button>
+    </div>
+  </div></article>`;
+}
+
 function render() {
   $("#portfolioRows").innerHTML = content.portfolios.length
-    ? content.portfolios
-        .map(
-          (x) =>
-            `<tr><td>${esc(x.name)}</td><td>${esc(x.description)}</td><td>${esc(x.tags)}</td><td class="row-actions"><button class="btn ghost" data-pe="${x.id}">Edit</button><button class="btn danger" data-pd="${x.id}">Delete</button></td></tr>`
-        )
-        .join("")
-    : '<tr><td colspan="4" class="empty">No portfolio items.</td></tr>';
+    ? content.portfolios.map(workCard).join("")
+    : '<p class="empty">No portfolio items yet. Add work and it will show on the public site.</p>';
   $("#testimonialRows").innerHTML = content.testimonials.length
     ? content.testimonials
         .map(
@@ -72,6 +97,17 @@ async function removeItem(kind, id) {
   }
 }
 
+function showPreview(src) {
+  const img = $("#portfolioPreview");
+  if (src) {
+    img.src = src;
+    img.classList.add("on");
+  } else {
+    img.removeAttribute("src");
+    img.classList.remove("on");
+  }
+}
+
 function openPortfolio(x) {
   $("#portfolioId").value = x?.id || "";
   $("#portfolioName").value = x?.name || "";
@@ -81,6 +117,7 @@ function openPortfolio(x) {
   $("#portfolioQuote").value = x?.quote || "";
   $("#portfolioImage").value = "";
   $("#portfolioModalTitle").textContent = x ? "Edit work" : "Add work";
+  showPreview(x?.image || "");
   $("#portfolioModal").classList.add("open");
 }
 function openTestimonial(x) {
@@ -98,6 +135,13 @@ function closeModals() {
 $("#addPortfolio").onclick = () => openPortfolio();
 $("#addTestimonial").onclick = () => openTestimonial();
 document.querySelectorAll(".cancel,.backdrop").forEach((x) => (x.onclick = closeModals));
+$("#portfolioImage").onchange = () => {
+  const file = $("#portfolioImage").files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => showPreview(reader.result);
+  reader.readAsDataURL(file);
+};
 function fileData(file) {
   return new Promise((resolve, reject) => {
     if (!file) return resolve("");
@@ -122,7 +166,7 @@ $("#portfolioForm").onsubmit = async (e) => {
   closeModals();
   toast(id ? "Edited" : "Added");
   const temp = { id: id || "tmp-" + Date.now(), ...body };
-  if (id) content.portfolios = content.portfolios.map((x) => (String(x.id) === String(id) ? { ...x, ...temp } : x));
+  if (id) content.portfolios = content.portfolios.map((x) => (String(x.id) === String(id) ? { ...x, ...temp, image: body.image || x.image } : x));
   else content.portfolios = [...content.portfolios, temp];
   render();
   try {
